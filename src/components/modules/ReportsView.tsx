@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
-import { StatusBadge } from '../common/Badge';
 import {
   FileSpreadsheet,
   Printer,
@@ -14,8 +13,24 @@ import {
   School,
   FileDown,
   Info,
+  Sliders,
+  Maximize2,
+  Minimize2,
+  FileText,
+  Eye,
+  RotateCcw,
+  Check,
+  ChevronDown,
 } from 'lucide-react';
 import { exportAttendanceMatrixToExcel } from '../../utils/excelHelpers';
+import {
+  PrintPageSettingsModal,
+  DEFAULT_PRINT_SETTINGS,
+  PrintPageSettings,
+  PaperSize,
+  PageOrientation,
+  FontScale,
+} from './PrintPageSettingsModal';
 
 export const ReportsView: React.FC = () => {
   const {
@@ -34,6 +49,10 @@ export const ReportsView: React.FC = () => {
   const [selectedMonth, setSelectedMonth] = useState('2026-08');
   const [customStartDate, setCustomStartDate] = useState('2026-08-01');
   const [customEndDate, setCustomEndDate] = useState('2026-08-31');
+
+  // Page Setup & Paper Configuration State
+  const [printSettings, setPrintSettings] = useState<PrintPageSettings>(DEFAULT_PRINT_SETTINGS);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
   const activeClass = classes.find((c) => c.id === selectedClassId) || classes[0];
 
@@ -118,7 +137,7 @@ export const ReportsView: React.FC = () => {
 
   // Compute student matrix records
   const studentMatrix = useMemo(() => {
-    return classStudents.map((student) => {
+    return classStudents.map((student, originalIndex) => {
       let hCount = 0;
       let sCount = 0;
       let iCount = 0;
@@ -155,12 +174,13 @@ export const ReportsView: React.FC = () => {
         };
       });
 
-      // Calculate attendance rate based on effective school days (excluding Sundays & National Holidays)
+      // Calculate attendance rate based on effective school days
       const baseDays = effectiveSchoolDaysCount > 0 ? effectiveSchoolDaysCount : reportDates.length;
       const rate = baseDays > 0 ? Math.min(100, Math.round((hCount / baseDays) * 100)) : 100;
 
       return {
         student,
+        originalIndex,
         dateStatuses,
         hCount,
         sCount,
@@ -220,6 +240,52 @@ export const ReportsView: React.FC = () => {
       return { isSunday: false, isHoliday: false, presentCount, absentCount };
     });
   }, [reportDates, studentMatrix, isHoliday]);
+
+  // Paginated student chunks if rowsPerPage > 0
+  const paginatedChunks = useMemo(() => {
+    if (printSettings.rowsPerPage <= 0) {
+      return [studentMatrix];
+    }
+    const chunks = [];
+    for (let i = 0; i < studentMatrix.length; i += printSettings.rowsPerPage) {
+      chunks.push(studentMatrix.slice(i, i + printSettings.rowsPerPage));
+    }
+    return chunks.length > 0 ? chunks : [[]];
+  }, [studentMatrix, printSettings.rowsPerPage]);
+
+  // Dynamic CSS margins calculation
+  const marginCss = useMemo(() => {
+    if (printSettings.marginPreset === 'narrow') return '5mm 6mm';
+    if (printSettings.marginPreset === 'normal') return '10mm 12mm';
+    if (printSettings.marginPreset === 'wide') return '15mm 18mm';
+    if (printSettings.marginPreset === 'compact') return '3mm 4mm';
+    return `${printSettings.customMarginMm.top}mm ${printSettings.customMarginMm.right}mm ${printSettings.customMarginMm.bottom}mm ${printSettings.customMarginMm.left}mm`;
+  }, [printSettings.marginPreset, printSettings.customMarginMm]);
+
+  // Dynamic Page size string for @page
+  const pageSizeCss = useMemo(() => {
+    let sizeName = '215mm 330mm'; // F4 default
+    if (printSettings.paperSize === 'A4') sizeName = 'A4';
+    else if (printSettings.paperSize === 'A3') sizeName = 'A3';
+    else if (printSettings.paperSize === 'Legal') sizeName = 'legal';
+    else if (printSettings.paperSize === 'Letter') sizeName = 'letter';
+    else if (printSettings.paperSize === 'F4') sizeName = '215mm 330mm';
+
+    return `${sizeName} ${printSettings.orientation}`;
+  }, [printSettings.paperSize, printSettings.orientation]);
+
+  // Formatted Signature Date
+  const signatureFormattedDate = useMemo(() => {
+    let d = new Date();
+    if (printSettings.signatureDateOption === 'end_of_month') {
+      const [y, m] = selectedMonth.split('-').map(Number);
+      const days = new Date(y, m, 0).getDate();
+      d = new Date(y, m - 1, days);
+    } else if (printSettings.signatureDateOption === 'custom' && printSettings.customSignatureDate) {
+      d = new Date(printSettings.customSignatureDate + 'T00:00:00');
+    }
+    return new Intl.DateTimeFormat('id-ID', { dateStyle: 'long' }).format(d);
+  }, [printSettings.signatureDateOption, printSettings.customSignatureDate, selectedMonth]);
 
   // Trigger browser print dialog for formal school attendance sheet
   const handlePrint = () => {
@@ -297,6 +363,24 @@ export const ReportsView: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-12 animate-in fade-in duration-300">
+      {/* Dynamic Print Styles for Exact Paper Size & Orientation & Font Scaling */}
+      <style>
+        {`
+          @page {
+            size: ${pageSizeCss};
+            margin: ${marginCss};
+          }
+          @media print {
+            .print-container {
+              font-size: ${printSettings.fontSizeScale} !important;
+            }
+            .matrix-table-print {
+              font-size: ${printSettings.fontSizeScale} !important;
+            }
+          }
+        `}
+      </style>
+
       {/* Top Filter and Actions */}
       <div className="no-print p-6 rounded-2xl bg-white/90 dark:bg-slate-900 border border-sky-200/80 dark:border-sky-900/60 shadow-xs space-y-4">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
@@ -312,6 +396,21 @@ export const ReportsView: React.FC = () => {
 
           {/* Action Buttons */}
           <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+            {/* Page Setup Button */}
+            <button
+              id="open-page-setup-modal-btn"
+              type="button"
+              onClick={() => setIsSettingsModalOpen(true)}
+              className="flex-1 sm:flex-none px-3.5 py-2 bg-sky-100 hover:bg-sky-200 dark:bg-sky-950 dark:hover:bg-sky-900 text-sky-900 dark:text-sky-200 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 border border-sky-300 dark:border-sky-800 shadow-2xs active:scale-95 cursor-pointer"
+              title="Atur ukuran kertas (F4/A4), orientasi landscape, margin, skala tabel, dan KOP resmi"
+            >
+              <Sliders className="w-4 h-4 text-sky-700 dark:text-sky-400" />
+              <span>Atur Halaman & Kertas</span>
+              <span className="px-1.5 py-0.2 rounded-md bg-sky-700 text-white text-[10px] font-mono">
+                {printSettings.paperSize} {printSettings.orientation === 'landscape' ? 'LS' : 'PT'}
+              </span>
+            </button>
+
             <button
               id="export-report-excel-button"
               type="button"
@@ -341,6 +440,102 @@ export const ReportsView: React.FC = () => {
             >
               <Printer className="w-4 h-4" />
               <span>Cetak KOP Resmi (PDF)</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Quick Page Setup Control Strip (Paper Size, Orientation, Scale, Preview Mode) */}
+        <div className="p-3 rounded-xl bg-sky-50/80 dark:bg-sky-950/60 border border-sky-200/80 dark:border-sky-900/60 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <span className="font-bold text-sky-900 dark:text-sky-300 flex items-center gap-1.5">
+              <FileText className="w-3.5 h-3.5 text-sky-700 dark:text-sky-400" />
+              Ukuran Kertas:
+            </span>
+
+            {/* Quick Paper Selector */}
+            <div className="flex items-center gap-1 bg-white dark:bg-slate-900 p-0.5 rounded-lg border border-sky-200 dark:border-sky-800">
+              {(['F4', 'A4', 'A3', 'Legal', 'Letter'] as PaperSize[]).map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setPrintSettings((prev) => ({ ...prev, paperSize: p }))}
+                  className={`px-2 py-1 rounded text-[11px] font-extrabold transition-all cursor-pointer ${
+                    printSettings.paperSize === p
+                      ? 'bg-sky-700 text-white shadow-2xs'
+                      : 'text-slate-700 dark:text-slate-300 hover:text-sky-700'
+                  }`}
+                  title={p === 'F4' ? 'F4 / Folio (215 × 330 mm) - Standar Sekolah Indonesia' : `${p} Standar`}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+
+            {/* Quick Orientation Selector */}
+            <div className="flex items-center gap-1 bg-white dark:bg-slate-900 p-0.5 rounded-lg border border-sky-200 dark:border-sky-800">
+              <button
+                type="button"
+                onClick={() => setPrintSettings((prev) => ({ ...prev, orientation: 'landscape' }))}
+                className={`px-2 py-1 rounded text-[11px] font-extrabold transition-all flex items-center gap-1 cursor-pointer ${
+                  printSettings.orientation === 'landscape'
+                    ? 'bg-sky-700 text-white shadow-2xs'
+                    : 'text-slate-700 dark:text-slate-300 hover:text-sky-700'
+                }`}
+                title="Landscape (Mendatar) - Direkomendasikan untuk tabel presensi bulanan"
+              >
+                <Maximize2 className="w-3 h-3 rotate-45" />
+                <span>Landscape</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setPrintSettings((prev) => ({ ...prev, orientation: 'portrait' }))}
+                className={`px-2 py-1 rounded text-[11px] font-extrabold transition-all flex items-center gap-1 cursor-pointer ${
+                  printSettings.orientation === 'portrait'
+                    ? 'bg-sky-700 text-white shadow-2xs'
+                    : 'text-slate-700 dark:text-slate-300 hover:text-sky-700'
+                }`}
+              >
+                <Minimize2 className="w-3 h-3" />
+                <span>Portrait</span>
+              </button>
+            </div>
+
+            {/* Quick Font Scaling */}
+            <div className="flex items-center gap-1.5">
+              <span className="font-bold text-sky-900 dark:text-sky-300">Skala:</span>
+              <select
+                value={printSettings.fontSizeScale}
+                onChange={(e) =>
+                  setPrintSettings((prev) => ({ ...prev, fontSizeScale: e.target.value as FontScale }))
+                }
+                className="p-1 bg-white dark:bg-slate-900 border border-sky-200 dark:border-sky-800 rounded-lg text-[11px] font-bold text-slate-800 dark:text-slate-200 focus:outline-hidden cursor-pointer"
+              >
+                <option value="75%">75% (Kompak)</option>
+                <option value="80%">80% (Pas 1 Lembar)</option>
+                <option value="85%">85% (Ideal F4)</option>
+                <option value="90%">90%</option>
+                <option value="95%">95%</option>
+                <option value="100%">100% (Normal)</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Real Paper Preview Toggle & Modal Opener */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() =>
+                setPrintSettings((prev) => ({ ...prev, realPaperPreview: !prev.realPaperPreview }))
+              }
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all flex items-center gap-1.5 cursor-pointer ${
+                printSettings.realPaperPreview
+                  ? 'bg-amber-400 text-slate-950 border-amber-500 shadow-2xs font-extrabold'
+                  : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-sky-200 dark:border-sky-800'
+              }`}
+              title="Aktifkan simulasi tampilan lembar kertas cetak fisik"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span>{printSettings.realPaperPreview ? 'Mode Kertas: Aktif' : 'Simulasi Kertas'}</span>
             </button>
           </div>
         </div>
@@ -491,346 +686,418 @@ export const ReportsView: React.FC = () => {
         </div>
       </div>
 
-      {/* Printable School Attendance Document Container */}
+      {/* Main Document Body (Supports continuous or multi-page layout) */}
       <div
-        id="attendance-printable-report"
-        className="print-container bg-white dark:bg-slate-900 rounded-2xl border border-sky-200/80 dark:border-sky-900/60 shadow-xs p-6 md:p-8 space-y-6"
+        className={`print-container transition-all ${
+          printSettings.realPaperPreview
+            ? 'mx-auto max-w-[1280px] p-4 bg-slate-200/70 dark:bg-slate-950/80 rounded-3xl border border-slate-300 dark:border-slate-800'
+            : ''
+        }`}
       >
-        {/* Formal Elementary School KOP Surat Header */}
-        <div className="border-b-4 border-double border-slate-900 dark:border-slate-300 pb-4 text-center space-y-1">
-          <div className="flex items-center justify-between gap-4">
-            {/* Left Logo (Logo Utama Sekolah / Dinas) */}
-            <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 flex items-center justify-center">
-              {schoolProfile.logoUrl ? (
-                <img
-                  src={schoolProfile.logoUrl}
-                  alt="Logo Sekolah"
-                  className="max-h-full max-w-full object-contain"
-                />
-              ) : (
-                <div className="w-14 h-14 rounded-xl bg-sky-700 text-white flex items-center justify-center text-xl font-bold shadow-xs">
-                  <School className="w-8 h-8" />
-                </div>
-              )}
-            </div>
+        {paginatedChunks.map((chunk, pageIndex) => {
+          const isFirstPage = pageIndex === 0;
+          const isLastPage = pageIndex === paginatedChunks.length - 1;
+          const totalPages = paginatedChunks.length;
 
-            {/* Center Heading */}
-            <div className="flex-1 text-center min-w-0 px-2">
-              <h3 className="text-xs sm:text-sm md:text-base font-black tracking-wide text-slate-900 dark:text-white uppercase leading-tight">
-                {schoolProfile.provinsiDinas ? schoolProfile.provinsiDinas.toUpperCase() : `PEMERINTAH ${schoolProfile.regency ? schoolProfile.regency.toUpperCase() : 'DAERAH'}`}
-              </h3>
-              <h4 className="text-[11px] sm:text-xs md:text-sm font-extrabold text-sky-700 dark:text-sky-400 uppercase leading-tight mt-0.5">
-                {schoolProfile.dinasPendidikan || 'DINAS PENDIDIKAN DAN KEBUDAYAAN'}
-              </h4>
-              <h2 className="text-sm sm:text-base md:text-xl font-black text-slate-950 dark:text-white uppercase tracking-tight leading-snug mt-0.5">
-                {schoolProfile.name}
-              </h2>
-              <p className="text-[10px] sm:text-[11px] text-slate-600 dark:text-slate-400 pt-1 leading-normal">
-                {schoolProfile.address}
-              </p>
-              <p className="text-[9.5px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-medium">
-                Telp: {schoolProfile.phone} • Email: {schoolProfile.email} • Website: {schoolProfile.website || 'https://kemdikbud.go.id'}
-              </p>
-              <p className="text-[9.5px] sm:text-[10px] text-slate-600 dark:text-slate-400 font-semibold mt-0.5">
-                NPSN: <strong>{schoolProfile.npsn}</strong> {schoolProfile.nss ? `• NSS: ${schoolProfile.nss}` : ''} • Akreditasi: <strong>{schoolProfile.akreditasi || 'A (Unggul)'}</strong> • Kurikulum: <strong>{schoolProfile.kurikulum || 'Kurikulum Merdeka'}</strong>
-              </p>
-            </div>
-
-            {/* Right Logo (Logo Tut Wuri Handayani / Pendamping) */}
-            <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 flex items-center justify-center">
-              {schoolProfile.secondaryLogoUrl ? (
-                <img
-                  src={schoolProfile.secondaryLogoUrl}
-                  alt="Logo Pendamping"
-                  className="max-h-full max-w-full object-contain"
-                />
-              ) : schoolProfile.logoUrl ? (
-                <img
-                  src={schoolProfile.logoUrl}
-                  alt="Logo Sekolah"
-                  className="max-h-full max-w-full object-contain opacity-90"
-                />
-              ) : (
-                <div className="w-14 h-14 rounded-xl bg-sky-800 text-white flex items-center justify-center text-xl font-bold shadow-xs">
-                  <School className="w-8 h-8" />
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="pt-2 text-xs font-black uppercase tracking-wider text-slate-900 dark:text-slate-100">
-            LAPORAN REKAPITULASI KEHADIRAN SISWA BULAN {periodMode === 'monthly' || periodMode === 'biweekly_1' || periodMode === 'biweekly_2' ? formatMonthTitle(selectedMonth).toUpperCase() : 'BERJALAN'}
-          </div>
-          <div className="text-xs text-slate-600 dark:text-slate-400">
-            Kelas: <strong>{activeClass ? activeClass.name : 'Semua Kelas'}</strong> •
-            Periode: <strong>{reportDates[0]} s/d {reportDates[reportDates.length - 1]}</strong> ({reportDates.length} Hari, {effectiveSchoolDaysCount} Hari Efektif) •
-            Tahun Ajaran: <strong>{schoolProfile.academicYear} ({schoolProfile.semester})</strong>
-          </div>
-        </div>
-
-        {/* Matrix Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse border border-slate-300 dark:border-slate-700 text-xs">
-            <thead>
-              <tr className="bg-sky-100/70 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold border-b border-slate-300 dark:border-slate-700 text-[11px]">
-                <th className="py-2.5 px-2 border-r border-slate-300 dark:border-slate-700 text-center w-8 shrink-0">
-                  No
-                </th>
-                <th className="py-2.5 px-3 border-r border-slate-300 dark:border-slate-700 min-w-[150px]">
-                  Nama Siswa
-                </th>
-                <th className="py-2.5 px-1.5 border-r border-slate-300 dark:border-slate-700 text-center w-10 shrink-0">
-                  L/P
-                </th>
-
-                {/* Date Columns: Sundays and Holidays are highlighted */}
-                {reportDates.map((dateStr) => {
-                  const d = new Date(dateStr + 'T00:00:00');
-                  const dayNum = d.getDate();
-                  const isSun = isSunday(dateStr);
-                  const hol = isHoliday(dateStr);
-                  const dayName = isSun ? 'Min' : new Intl.DateTimeFormat('id-ID', {
-                    weekday: 'short',
-                  }).format(d);
-
-                  return (
-                    <th
-                      key={dateStr}
-                      className={`py-1.5 px-1 border-r text-center min-w-[28px] max-w-[34px] ${
-                        isSun
-                          ? 'sunday-col bg-slate-300 dark:bg-slate-950 text-rose-700 dark:text-rose-400 font-black border-slate-400 dark:border-slate-700 shadow-inner'
-                          : hol
-                          ? 'bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 font-black border-slate-400 dark:border-slate-700'
-                          : 'border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200'
-                      }`}
-                      title={isSun ? `${dateStr}: Hari Minggu (Libur)` : hol ? `${dateStr}: ${hol.name} (Libur Nasional)` : dateStr}
-                    >
-                      <div className={`text-[8.5px] leading-tight ${isSun ? 'text-rose-600 dark:text-rose-400 font-extrabold uppercase' : hol ? 'text-indigo-600 dark:text-indigo-400 font-extrabold uppercase' : 'text-slate-500 dark:text-slate-400'}`}>
-                        {hol ? 'LN' : dayName}
-                      </div>
-                      <div className={`text-[11px] ${isSun ? 'text-rose-800 dark:text-rose-300 font-black' : hol ? 'text-indigo-800 dark:text-indigo-200 font-black' : 'font-bold'}`}>
-                        {dayNum}
-                      </div>
-                    </th>
-                  );
-                })}
-
-                {/* Totals */}
-                <th className="py-2 px-1 border-r border-slate-300 dark:border-slate-700 text-center bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 w-9 shrink-0" title="Hadir">
-                  H
-                </th>
-                <th className="py-2 px-1 border-r border-slate-300 dark:border-slate-700 text-center bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 w-9 shrink-0" title="Terlambat">
-                  T
-                </th>
-                <th className="py-2 px-1 border-r border-slate-300 dark:border-slate-700 text-center bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 w-9 shrink-0" title="Sakit">
-                  S
-                </th>
-                <th className="py-2 px-1 border-r border-slate-300 dark:border-slate-700 text-center bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 w-9 shrink-0" title="Izin">
-                  I
-                </th>
-                <th className="py-2 px-1 border-r border-slate-300 dark:border-slate-700 text-center bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 w-9 shrink-0" title="Alpa">
-                  A
-                </th>
-                <th className="py-2 px-1 border-r border-slate-300 dark:border-slate-700 text-center bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 w-9 shrink-0" title="Libur Nasional">
-                  LN
-                </th>
-                <th className="py-2 px-1.5 text-center bg-sky-200/80 dark:bg-slate-700 font-extrabold w-12 shrink-0">
-                  %
-                </th>
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-              {studentMatrix.map((item, idx) => (
-                <tr
-                  key={item.student.id}
-                  className="hover:bg-sky-50/50 dark:hover:bg-slate-800/40 transition-colors"
+          return (
+            <div
+              key={pageIndex}
+              id={`attendance-printable-report-page-${pageIndex + 1}`}
+              className={`page-sheet bg-white dark:bg-slate-900 rounded-2xl border border-sky-200/80 dark:border-sky-900/60 shadow-xs p-6 md:p-8 space-y-5 ${
+                printSettings.realPaperPreview ? 'mb-8 shadow-xl ring-1 ring-slate-300 dark:ring-slate-800' : ''
+              } ${!isLastPage ? 'avoid-break-inside' : ''}`}
+            >
+              {/* Formal Elementary School KOP Surat Header */}
+              {printSettings.showKop && (
+                <div
+                  className={`pb-3 text-center space-y-1 ${
+                    printSettings.showDoubleLine
+                      ? 'border-b-4 border-double border-slate-900 dark:border-slate-300'
+                      : 'border-b-2 border-slate-800 dark:border-slate-300'
+                  }`}
                 >
-                  <td className="py-2 px-1 text-center border-r border-slate-200 dark:border-slate-700 font-bold text-slate-400 text-[11px]">
-                    {idx + 1}
-                  </td>
-                  <td className="py-2 px-2.5 border-r border-slate-200 dark:border-slate-700 font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[180px]">
-                    {item.student.name}
-                  </td>
-                  <td className="py-2 px-1 text-center border-r border-slate-200 dark:border-slate-700 font-mono text-slate-500 text-[11px]">
-                    {item.student.gender}
-                  </td>
+                  <div className="flex items-center justify-between gap-4">
+                    {/* Left Logo (Logo Utama Sekolah / Dinas) */}
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 flex items-center justify-center">
+                      {printSettings.showLogoLeft && (
+                        schoolProfile.logoUrl ? (
+                          <img
+                            src={schoolProfile.logoUrl}
+                            alt="Logo Sekolah"
+                            className="max-h-full max-w-full object-contain"
+                          />
+                        ) : (
+                          <div className="w-14 h-14 rounded-xl bg-sky-700 text-white flex items-center justify-center text-xl font-bold shadow-xs">
+                            <School className="w-8 h-8" />
+                          </div>
+                        )
+                      )}
+                    </div>
 
-                  {/* Status cells per date */}
-                  {item.dateStatuses.map((ds) => {
-                    if (ds.isSunday) {
-                      return (
-                        <td
-                          key={ds.date}
-                          className="sunday-col py-1.5 px-0.5 text-center border-r border-slate-300 dark:border-slate-700 bg-slate-300/80 dark:bg-slate-900/90 text-slate-600 dark:text-slate-400 font-extrabold text-[10px]"
-                          title={`${ds.date}: Hari Minggu (Libur)`}
-                        >
-                          {ds.status === 'L' ? (
-                            <span className="text-[9px] font-semibold text-slate-500 dark:text-slate-400">Libur</span>
-                          ) : (
-                            <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">{ds.status}</span>
-                          )}
-                        </td>
-                      );
-                    }
+                    {/* Center Heading */}
+                    <div className="flex-1 text-center min-w-0 px-2">
+                      <h3 className="text-xs sm:text-sm md:text-base font-black tracking-wide text-slate-900 dark:text-white uppercase leading-tight">
+                        {schoolProfile.provinsiDinas ? schoolProfile.provinsiDinas.toUpperCase() : `PEMERINTAH ${schoolProfile.regency ? schoolProfile.regency.toUpperCase() : 'DAERAH'}`}
+                      </h3>
+                      <h4 className="text-[11px] sm:text-xs md:text-sm font-extrabold text-sky-700 dark:text-sky-400 uppercase leading-tight mt-0.5">
+                        {schoolProfile.dinasPendidikan || 'DINAS PENDIDIKAN DAN KEBUDAYAAN'}
+                      </h4>
+                      <h2 className="text-sm sm:text-base md:text-xl font-black text-slate-950 dark:text-white uppercase tracking-tight leading-snug mt-0.5">
+                        {schoolProfile.name}
+                      </h2>
+                      <p className="text-[10px] sm:text-[11px] text-slate-600 dark:text-slate-400 pt-0.5 leading-normal">
+                        {schoolProfile.address}
+                      </p>
+                      <p className="text-[9.5px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+                        Telp: {schoolProfile.phone} • Email: {schoolProfile.email} • Website: {schoolProfile.website || 'https://kemdikbud.go.id'}
+                      </p>
+                      {printSettings.showSchoolMeta && (
+                        <p className="text-[9.5px] sm:text-[10px] text-slate-600 dark:text-slate-400 font-semibold mt-0.5">
+                          NPSN: <strong>{schoolProfile.npsn}</strong> {schoolProfile.nss ? `• NSS: ${schoolProfile.nss}` : ''} • Akreditasi: <strong>{schoolProfile.akreditasi || 'A (Unggul)'}</strong> • Kurikulum: <strong>{schoolProfile.kurikulum || 'Kurikulum Merdeka'}</strong>
+                        </p>
+                      )}
+                    </div>
 
-                    if (ds.isHoliday || ds.status === 'LN') {
-                      return (
-                        <td
-                          key={ds.date}
-                          className="py-1.5 px-0.5 text-center border-r border-slate-300 dark:border-slate-700 bg-indigo-50/70 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 font-extrabold text-[10px]"
-                          title={`${ds.date}: ${ds.holidayName || 'Libur Nasional'}`}
-                        >
-                          LN
-                        </td>
-                      );
-                    }
+                    {/* Right Logo (Logo Tut Wuri Handayani / Pendamping) */}
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 flex items-center justify-center">
+                      {printSettings.showLogoRight && (
+                        schoolProfile.secondaryLogoUrl ? (
+                          <img
+                            src={schoolProfile.secondaryLogoUrl}
+                            alt="Logo Pendamping"
+                            className="max-h-full max-w-full object-contain"
+                          />
+                        ) : schoolProfile.logoUrl ? (
+                          <img
+                            src={schoolProfile.logoUrl}
+                            alt="Logo Sekolah"
+                            className="max-h-full max-w-full object-contain opacity-90"
+                          />
+                        ) : (
+                          <div className="w-14 h-14 rounded-xl bg-sky-800 text-white flex items-center justify-center text-xl font-bold shadow-xs">
+                            <School className="w-8 h-8" />
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </div>
 
-                    const colorMap: Record<string, string> = {
-                      H: 'text-emerald-700 dark:text-emerald-400 font-bold',
-                      T: 'text-purple-700 dark:text-purple-400 font-bold bg-purple-50/60 dark:bg-purple-950/30',
-                      S: 'text-amber-700 dark:text-amber-400 font-bold bg-amber-50 dark:bg-amber-950/30',
-                      I: 'text-sky-700 dark:text-sky-400 font-bold bg-sky-50 dark:bg-sky-950/30',
-                      A: 'text-rose-700 dark:text-rose-400 font-bold bg-rose-50 dark:bg-rose-950/30',
-                      LN: 'text-indigo-700 dark:text-indigo-400 font-bold bg-indigo-50 dark:bg-indigo-950/30',
-                    };
+                  <div className="pt-2 text-xs font-black uppercase tracking-wider text-slate-900 dark:text-slate-100">
+                    LAPORAN REKAPITULASI KEHADIRAN SISWA BULAN {periodMode === 'monthly' || periodMode === 'biweekly_1' || periodMode === 'biweekly_2' ? formatMonthTitle(selectedMonth).toUpperCase() : 'BERJALAN'}
+                  </div>
+                  <div className="text-xs text-slate-600 dark:text-slate-400">
+                    Kelas: <strong>{activeClass ? activeClass.name : 'Semua Kelas'}</strong> •
+                    Periode: <strong>{reportDates[0]} s/d {reportDates[reportDates.length - 1]}</strong> ({reportDates.length} Hari, {effectiveSchoolDaysCount} Hari Efektif) •
+                    Tahun Ajaran: <strong>{schoolProfile.academicYear} ({schoolProfile.semester})</strong>
+                    {totalPages > 1 && (
+                      <span> • <strong>Halaman {pageIndex + 1} dari {totalPages}</strong></span>
+                    )}
+                  </div>
+                </div>
+              )}
 
-                    return (
-                      <td
-                        key={ds.date}
-                        className={`py-1.5 px-0.5 text-center border-r border-slate-200 dark:border-slate-700 font-mono text-[11px] ${
-                          colorMap[ds.status] || ''
-                        }`}
-                        title={`${ds.date}: ${ds.status} ${ds.notes ? `(${ds.notes})` : ''}`}
-                      >
-                        {ds.status}
-                      </td>
-                    );
-                  })}
+              {/* Matrix Table */}
+              <div className="overflow-x-auto">
+                <table className="matrix-table-print w-full text-left border-collapse border border-slate-300 dark:border-slate-700 text-xs">
+                  <thead>
+                    <tr className="bg-sky-100/70 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold border-b border-slate-300 dark:border-slate-700 text-[11px]">
+                      <th className="py-2 px-1.5 border-r border-slate-300 dark:border-slate-700 text-center w-7 shrink-0">
+                        No
+                      </th>
+                      <th className="py-2 px-2 border-r border-slate-300 dark:border-slate-700 min-w-[140px]">
+                        Nama Siswa
+                      </th>
+                      <th className="py-2 px-1 border-r border-slate-300 dark:border-slate-700 text-center w-8 shrink-0">
+                        L/P
+                      </th>
 
-                  {/* Summary Totals */}
-                  <td className="py-1.5 px-1 text-center border-r border-slate-200 dark:border-slate-700 font-bold text-emerald-700 dark:text-emerald-300 text-[11px]">
-                    {item.hCount}
-                  </td>
-                  <td className="py-1.5 px-1 text-center border-r border-slate-200 dark:border-slate-700 font-bold text-purple-700 dark:text-purple-300 text-[11px]">
-                    {item.tCount}
-                  </td>
-                  <td className="py-1.5 px-1 text-center border-r border-slate-200 dark:border-slate-700 font-bold text-amber-700 dark:text-amber-300 text-[11px]">
-                    {item.sCount}
-                  </td>
-                  <td className="py-1.5 px-1 text-center border-r border-slate-200 dark:border-slate-700 font-bold text-sky-700 dark:text-sky-300 text-[11px]">
-                    {item.iCount}
-                  </td>
-                  <td className="py-1.5 px-1 text-center border-r border-slate-200 dark:border-slate-700 font-bold text-rose-700 dark:text-rose-300 text-[11px]">
-                    {item.aCount}
-                  </td>
-                  <td className="py-1.5 px-1 text-center border-r border-slate-200 dark:border-slate-700 font-bold text-indigo-700 dark:text-indigo-300 text-[11px]">
-                    {item.lnCount}
-                  </td>
-                  <td className="py-1.5 px-1 text-center font-extrabold text-slate-800 dark:text-slate-100 bg-sky-50/80 dark:bg-slate-800 text-[11px]">
-                    {item.rate}%
-                  </td>
-                </tr>
-              ))}
-            </tbody>
+                      {/* Date Columns: Sundays and Holidays are highlighted */}
+                      {reportDates.map((dateStr) => {
+                        const d = new Date(dateStr + 'T00:00:00');
+                        const dayNum = d.getDate();
+                        const isSun = isSunday(dateStr);
+                        const hol = isHoliday(dateStr);
+                        const dayName = isSun ? 'Min' : new Intl.DateTimeFormat('id-ID', {
+                          weekday: 'short',
+                        }).format(d);
 
-            {/* Table Footer: Daily Attendance Totals */}
-            <tfoot>
-              <tr className="bg-sky-100/70 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold border-t-2 border-slate-300 dark:border-slate-700 text-[10px]">
-                <td colSpan={3} className="py-2 px-2 border-r border-slate-300 dark:border-slate-700 text-right font-black uppercase">
-                  Jumlah Hadir:
-                </td>
-                {dailyColumnStats.map((stat, i) => {
-                  if (stat.isSunday) {
-                    return (
-                      <td
-                        key={i}
-                        className="sunday-col py-1 px-0.5 border-r border-slate-300 dark:border-slate-700 text-center bg-slate-300 dark:bg-slate-950 text-slate-500 font-bold"
-                        title="Hari Minggu"
-                      >
-                        -
-                      </td>
-                    );
-                  }
-                  if (stat.isHoliday) {
-                    return (
-                      <td
-                        key={i}
-                        className="py-1 px-0.5 border-r border-slate-300 dark:border-slate-700 text-center bg-indigo-100/70 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 font-bold text-[9px]"
-                        title={stat.holidayName}
-                      >
+                        return (
+                          <th
+                            key={dateStr}
+                            className={`py-1 px-0.5 border-r text-center min-w-[24px] max-w-[32px] ${
+                              isSun && printSettings.showSundays
+                                ? 'sunday-col bg-slate-300 dark:bg-slate-950 text-rose-700 dark:text-rose-400 font-black border-slate-400 dark:border-slate-700 shadow-inner'
+                                : hol && printSettings.showHolidays
+                                ? 'bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 font-black border-slate-400 dark:border-slate-700'
+                                : 'border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200'
+                            }`}
+                            title={isSun ? `${dateStr}: Hari Minggu (Libur)` : hol ? `${dateStr}: ${hol.name} (Libur Nasional)` : dateStr}
+                          >
+                            <div className={`text-[8px] leading-tight ${isSun ? 'text-rose-600 dark:text-rose-400 font-extrabold uppercase' : hol ? 'text-indigo-600 dark:text-indigo-400 font-extrabold uppercase' : 'text-slate-500 dark:text-slate-400'}`}>
+                              {hol ? 'LN' : dayName}
+                            </div>
+                            <div className={`text-[10.5px] ${isSun ? 'text-rose-800 dark:text-rose-300 font-black' : hol ? 'text-indigo-800 dark:text-indigo-200 font-black' : 'font-bold'}`}>
+                              {dayNum}
+                            </div>
+                          </th>
+                        );
+                      })}
+
+                      {/* Totals */}
+                      <th className="py-1.5 px-0.5 border-r border-slate-300 dark:border-slate-700 text-center bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 w-8 shrink-0" title="Hadir">
+                        H
+                      </th>
+                      <th className="py-1.5 px-0.5 border-r border-slate-300 dark:border-slate-700 text-center bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 w-8 shrink-0" title="Terlambat">
+                        T
+                      </th>
+                      <th className="py-1.5 px-0.5 border-r border-slate-300 dark:border-slate-700 text-center bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 w-8 shrink-0" title="Sakit">
+                        S
+                      </th>
+                      <th className="py-1.5 px-0.5 border-r border-slate-300 dark:border-slate-700 text-center bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 w-8 shrink-0" title="Izin">
+                        I
+                      </th>
+                      <th className="py-1.5 px-0.5 border-r border-slate-300 dark:border-slate-700 text-center bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 w-8 shrink-0" title="Alpa">
+                        A
+                      </th>
+                      <th className="py-1.5 px-0.5 border-r border-slate-300 dark:border-slate-700 text-center bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 w-8 shrink-0" title="Libur Nasional">
                         LN
-                      </td>
-                    );
-                  }
-                  return (
-                    <td
-                      key={i}
-                      className="py-1 px-0.5 border-r border-slate-200 dark:border-slate-700 text-center font-mono font-bold text-emerald-700 dark:text-emerald-400"
-                    >
-                      {stat.presentCount}
-                    </td>
-                  );
-                })}
-                <td colSpan={7} className="py-2 px-2 text-center font-black bg-sky-200/80 dark:bg-slate-700">
-                  Rata-rata: {classOverallStats.avgRate}%
-                </td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
+                      </th>
+                      <th className="py-1.5 px-1 text-center bg-sky-200/80 dark:bg-slate-700 font-extrabold w-10 shrink-0">
+                        %
+                      </th>
+                    </tr>
+                  </thead>
 
-        {/* Legend */}
-        <div className="flex flex-wrap items-center gap-3 text-xs pt-2 text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800">
-          <span className="font-bold text-slate-800 dark:text-white">Keterangan:</span>
-          <span className="flex items-center gap-1 font-semibold text-emerald-700 dark:text-emerald-400">
-            <strong>H:</strong> Hadir Tepat Waktu
-          </span>
-          <span className="flex items-center gap-1 font-semibold text-purple-700 dark:text-purple-400">
-            <strong>T:</strong> Terlambat
-          </span>
-          <span className="flex items-center gap-1 font-semibold text-amber-700 dark:text-amber-400">
-            <strong>S:</strong> Sakit
-          </span>
-          <span className="flex items-center gap-1 font-semibold text-sky-700 dark:text-sky-400">
-            <strong>I:</strong> Izin
-          </span>
-          <span className="flex items-center gap-1 font-semibold text-rose-700 dark:text-rose-400">
-            <strong>A:</strong> Alpa
-          </span>
-          <span className="flex items-center gap-1 font-semibold text-indigo-700 dark:text-indigo-400">
-            <strong>LN:</strong> Libur Nasional
-          </span>
-          <span className="flex items-center gap-1 font-bold text-slate-700 dark:text-slate-300 bg-slate-300 dark:bg-slate-800 px-2 py-0.5 rounded">
-            <strong>Hari Minggu:</strong> Libur Mingguan (Kolom Diarsir)
-          </span>
-        </div>
+                  <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                    {chunk.map((item) => (
+                      <tr
+                        key={item.student.id}
+                        className="hover:bg-sky-50/50 dark:hover:bg-slate-800/40 transition-colors"
+                      >
+                        <td className="py-1.5 px-1 text-center border-r border-slate-200 dark:border-slate-700 font-bold text-slate-400 text-[10.5px]">
+                          {item.originalIndex + 1}
+                        </td>
+                        <td className="py-1.5 px-2 border-r border-slate-200 dark:border-slate-700 font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[170px]">
+                          {item.student.name}
+                        </td>
+                        <td className="py-1.5 px-0.5 text-center border-r border-slate-200 dark:border-slate-700 font-mono text-slate-500 text-[10px]">
+                          {item.student.gender}
+                        </td>
 
-        {/* Official Signature Area (Signatures of Principal & Homeroom Teacher) */}
-        <div className="pt-6 grid grid-cols-2 text-center text-xs text-slate-800 dark:text-slate-200 gap-8">
-          <div>
-            <p>Mengetahui,</p>
-            <p className="font-bold">Kepala {schoolProfile.name}</p>
-            <div className="h-16" />
-            <p className="font-extrabold underline">{schoolProfile.principalName}</p>
-            <p className="text-[11px] text-slate-500 font-mono">
-              NIP. {schoolProfile.principalNip}
-            </p>
-          </div>
+                        {/* Status cells per date */}
+                        {item.dateStatuses.map((ds) => {
+                          if (ds.isSunday && printSettings.showSundays) {
+                            return (
+                              <td
+                                key={ds.date}
+                                className="sunday-col py-1 px-0.5 text-center border-r border-slate-300 dark:border-slate-700 bg-slate-300/80 dark:bg-slate-900/90 text-slate-600 dark:text-slate-400 font-extrabold text-[9.5px]"
+                                title={`${ds.date}: Hari Minggu (Libur)`}
+                              >
+                                {ds.status === 'L' ? (
+                                  <span className="text-[8.5px] font-semibold text-slate-500 dark:text-slate-400">Libur</span>
+                                ) : (
+                                  <span className="text-[9.5px] font-bold text-slate-700 dark:text-slate-300">{ds.status}</span>
+                                )}
+                              </td>
+                            );
+                          }
 
-          <div>
-            <p>
-              {schoolProfile.regency ? schoolProfile.regency.replace(/^(kota|kabupaten|kab\.|kota adm\.)\s*/i, '') : 'Jakarta'}, {new Intl.DateTimeFormat('id-ID', { dateStyle: 'long' }).format(new Date())}
-            </p>
-            <p className="font-bold">Guru Wali Kelas {activeClass ? activeClass.name : ''}</p>
-            <div className="h-16" />
-            <p className="font-extrabold underline">{activeClass ? activeClass.teacherName : 'Wali Kelas'}</p>
-            <p className="text-[11px] text-slate-500 font-mono">
-              NIP. {activeClass ? activeClass.teacherNip : '-'}
-            </p>
-          </div>
-        </div>
+                          if ((ds.isHoliday || ds.status === 'LN') && printSettings.showHolidays) {
+                            return (
+                              <td
+                                key={ds.date}
+                                className="py-1 px-0.5 text-center border-r border-slate-300 dark:border-slate-700 bg-indigo-50/70 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 font-extrabold text-[9.5px]"
+                                title={`${ds.date}: ${ds.holidayName || 'Libur Nasional'}`}
+                              >
+                                LN
+                              </td>
+                            );
+                          }
+
+                          const colorMap: Record<string, string> = {
+                            H: 'text-emerald-700 dark:text-emerald-400 font-bold',
+                            T: 'text-purple-700 dark:text-purple-400 font-bold bg-purple-50/60 dark:bg-purple-950/30',
+                            S: 'text-amber-700 dark:text-amber-400 font-bold bg-amber-50 dark:bg-amber-950/30',
+                            I: 'text-sky-700 dark:text-sky-400 font-bold bg-sky-50 dark:bg-sky-950/30',
+                            A: 'text-rose-700 dark:text-rose-400 font-bold bg-rose-50 dark:bg-rose-950/30',
+                            LN: 'text-indigo-700 dark:text-indigo-400 font-bold bg-indigo-50 dark:bg-indigo-950/30',
+                          };
+
+                          return (
+                            <td
+                              key={ds.date}
+                              className={`py-1 px-0.5 text-center border-r border-slate-200 dark:border-slate-700 font-mono text-[10.5px] ${
+                                colorMap[ds.status] || ''
+                              }`}
+                              title={`${ds.date}: ${ds.status} ${ds.notes ? `(${ds.notes})` : ''}`}
+                            >
+                              {ds.status}
+                            </td>
+                          );
+                        })}
+
+                        {/* Summary Totals */}
+                        <td className="py-1 px-0.5 text-center border-r border-slate-200 dark:border-slate-700 font-bold text-emerald-700 dark:text-emerald-300 text-[10.5px]">
+                          {item.hCount}
+                        </td>
+                        <td className="py-1 px-0.5 text-center border-r border-slate-200 dark:border-slate-700 font-bold text-purple-700 dark:text-purple-300 text-[10.5px]">
+                          {item.tCount}
+                        </td>
+                        <td className="py-1 px-0.5 text-center border-r border-slate-200 dark:border-slate-700 font-bold text-amber-700 dark:text-amber-300 text-[10.5px]">
+                          {item.sCount}
+                        </td>
+                        <td className="py-1 px-0.5 text-center border-r border-slate-200 dark:border-slate-700 font-bold text-sky-700 dark:text-sky-300 text-[10.5px]">
+                          {item.iCount}
+                        </td>
+                        <td className="py-1 px-0.5 text-center border-r border-slate-200 dark:border-slate-700 font-bold text-rose-700 dark:text-rose-300 text-[10.5px]">
+                          {item.aCount}
+                        </td>
+                        <td className="py-1 px-0.5 text-center border-r border-slate-200 dark:border-slate-700 font-bold text-indigo-700 dark:text-indigo-300 text-[10.5px]">
+                          {item.lnCount}
+                        </td>
+                        <td className="py-1 px-0.5 text-center font-extrabold text-slate-800 dark:text-slate-100 bg-sky-50/80 dark:bg-slate-800 text-[10.5px]">
+                          {item.rate}%
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+
+                  {/* Table Footer: Daily Attendance Totals (Only on Last Page or Single Page) */}
+                  {printSettings.showDailySummaryFooter && isLastPage && (
+                    <tfoot>
+                      <tr className="bg-sky-100/70 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold border-t-2 border-slate-300 dark:border-slate-700 text-[10px]">
+                        <td colSpan={3} className="py-1.5 px-2 border-r border-slate-300 dark:border-slate-700 text-right font-black uppercase">
+                          Jumlah Hadir:
+                        </td>
+                        {dailyColumnStats.map((stat, i) => {
+                          if (stat.isSunday && printSettings.showSundays) {
+                            return (
+                              <td
+                                key={i}
+                                className="sunday-col py-1 px-0.5 border-r border-slate-300 dark:border-slate-700 text-center bg-slate-300 dark:bg-slate-950 text-slate-500 font-bold"
+                                title="Hari Minggu"
+                              >
+                                -
+                              </td>
+                            );
+                          }
+                          if (stat.isHoliday && printSettings.showHolidays) {
+                            return (
+                              <td
+                                key={i}
+                                className="py-1 px-0.5 border-r border-slate-300 dark:border-slate-700 text-center bg-indigo-100/70 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 font-bold text-[8.5px]"
+                                title={stat.holidayName}
+                              >
+                                LN
+                              </td>
+                            );
+                          }
+                          return (
+                            <td
+                              key={i}
+                              className="py-1 px-0.5 border-r border-slate-200 dark:border-slate-700 text-center font-mono font-bold text-emerald-700 dark:text-emerald-400"
+                            >
+                              {stat.presentCount}
+                            </td>
+                          );
+                        })}
+                        <td colSpan={7} className="py-1.5 px-2 text-center font-black bg-sky-200/80 dark:bg-slate-700">
+                          Rata-rata: {classOverallStats.avgRate}%
+                        </td>
+                      </tr>
+                    </tfoot>
+                  )}
+                </table>
+              </div>
+
+              {/* Legend (If enabled and on last page or single page) */}
+              {printSettings.showLegend && isLastPage && (
+                <div className="flex flex-wrap items-center gap-3 text-[11px] pt-2 text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800">
+                  <span className="font-bold text-slate-800 dark:text-white">Keterangan:</span>
+                  <span className="flex items-center gap-1 font-semibold text-emerald-700 dark:text-emerald-400">
+                    <strong>H:</strong> Hadir Tepat Waktu
+                  </span>
+                  <span className="flex items-center gap-1 font-semibold text-purple-700 dark:text-purple-400">
+                    <strong>T:</strong> Terlambat
+                  </span>
+                  <span className="flex items-center gap-1 font-semibold text-amber-700 dark:text-amber-400">
+                    <strong>S:</strong> Sakit
+                  </span>
+                  <span className="flex items-center gap-1 font-semibold text-sky-700 dark:text-sky-400">
+                    <strong>I:</strong> Izin
+                  </span>
+                  <span className="flex items-center gap-1 font-semibold text-rose-700 dark:text-rose-400">
+                    <strong>A:</strong> Alpa
+                  </span>
+                  <span className="flex items-center gap-1 font-semibold text-indigo-700 dark:text-indigo-400">
+                    <strong>LN:</strong> Libur Nasional
+                  </span>
+                  {printSettings.showSundays && (
+                    <span className="flex items-center gap-1 font-bold text-slate-700 dark:text-slate-300 bg-slate-300 dark:bg-slate-800 px-2 py-0.5 rounded">
+                      <strong>Hari Minggu:</strong> Libur Mingguan
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Official Signature Area (Signatures on final page) */}
+              {printSettings.showSignatures && isLastPage && (
+                <div className="pt-4 grid grid-cols-2 text-center text-xs text-slate-800 dark:text-slate-200 gap-8 avoid-break-inside">
+                  <div>
+                    <p>Mengetahui,</p>
+                    <p className="font-bold">Kepala {schoolProfile.name}</p>
+                    <div className="h-14" />
+                    <p className="font-extrabold underline">{schoolProfile.principalName}</p>
+                    <p className="text-[10.5px] text-slate-500 font-mono">
+                      NIP. {schoolProfile.principalNip}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p>
+                      {printSettings.customCity || (schoolProfile.regency ? schoolProfile.regency.replace(/^(kota|kabupaten|kab\.|kota adm\.)\s*/i, '') : 'Jakarta')}, {signatureFormattedDate}
+                    </p>
+                    <p className="font-bold">Guru Wali Kelas {activeClass ? activeClass.name : ''}</p>
+                    <div className="h-14" />
+                    <p className="font-extrabold underline">{activeClass ? activeClass.teacherName : 'Wali Kelas'}</p>
+                    <p className="text-[10.5px] text-slate-500 font-mono">
+                      NIP. {activeClass ? activeClass.teacherNip : '-'}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Page Number & Document Footer Meta */}
+              <div className="pt-2 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[9.5px] text-slate-500 dark:text-slate-400">
+                <div>
+                  {printSettings.showPrintTimestamp && (
+                    <span>
+                      Dicetak otomatis melalui Aplikasi Absensi Siswa SD • {new Date().toLocaleDateString('id-ID', { dateStyle: 'full' })}
+                    </span>
+                  )}
+                </div>
+                <div>
+                  {printSettings.showPageNumbers && (
+                    <span className="font-bold">
+                      Halaman {pageIndex + 1} dari {totalPages} ({printSettings.paperSize} {printSettings.orientation})
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
+
+      {/* Page Setup Configuration Modal */}
+      <PrintPageSettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+        settings={printSettings}
+        onChangeSettings={(newSettings) => setPrintSettings(newSettings)}
+        onPrintNow={handlePrint}
+        totalStudents={classStudents.length}
+      />
     </div>
   );
 };

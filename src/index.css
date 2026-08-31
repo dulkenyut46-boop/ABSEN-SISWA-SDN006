@@ -117,6 +117,18 @@
     margin: 6mm;
   }
 
+  .print-page-break {
+    page-break-after: always !important;
+    break-after: page !important;
+    height: 0 !important;
+    display: block !important;
+  }
+
+  .avoid-break-inside {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
   .sunday-col {
     background-color: #cbd5e1 !important;
     color: #475569 !important;
