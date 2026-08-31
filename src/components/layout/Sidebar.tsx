@@ -138,20 +138,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
         style={{
           width: undefined, // Handled responsive via inline/classes
         }}
-        className={`fixed top-0 bottom-0 left-0 z-40 bg-[#dbeefa] dark:bg-[#0a182f] border-r border-sky-300 dark:border-sky-800 flex flex-col transition-all duration-300 ease-in-out lg:static lg:z-auto lg:h-[calc(100vh-6rem)] lg:rounded-2xl lg:shadow-xs lg:border lg:border-sky-300 dark:lg:border-sky-800 shrink-0 ${
+        className={`fixed top-0 bottom-0 left-0 z-40 bg-[#dbeefa] dark:bg-[#0a182f] border-r border-sky-300 dark:border-sky-800 flex flex-col transition-all duration-300 ease-in-out lg:sticky lg:top-4 lg:z-30 lg:h-[calc(100vh-2rem)] lg:rounded-2xl lg:shadow-sm lg:border lg:border-sky-300 dark:lg:border-sky-800 shrink-0 ${
           isOpen ? 'translate-x-0 w-64 md:w-72' : '-translate-x-full lg:translate-x-0'
-        } ${isSidebarCollapsed ? 'lg:w-[76px]' : 'lg:w-[260px]'}`}
+        } ${isSidebarCollapsed ? 'lg:w-[72px]' : 'lg:w-[250px]'}`}
       >
         {/* Brand Header */}
         <div
-          className={`border-b border-sky-300/80 dark:border-sky-800 flex items-center transition-all ${
+          className={`border-b border-sky-300/80 dark:border-sky-800 flex items-center transition-all shrink-0 ${
             isSidebarCollapsed
-              ? 'p-3 flex-col gap-2 justify-center text-center'
-              : 'p-4 justify-between gap-3'
+              ? 'p-2.5 flex-col gap-1.5 justify-center text-center'
+              : 'px-3.5 py-3 justify-between gap-2.5'
           }`}
         >
-          <div className={`flex items-center gap-3 min-w-0 ${isSidebarCollapsed ? 'justify-center' : ''}`}>
-            <div className="w-10 h-10 rounded-xl bg-sky-700 flex items-center justify-center text-white shadow-xs shrink-0 overflow-hidden p-1 border border-sky-400/40">
+          <div className={`flex items-center gap-2.5 min-w-0 ${isSidebarCollapsed ? 'justify-center' : ''}`}>
+            <div className="w-9 h-9 rounded-xl bg-sky-700 flex items-center justify-center text-white shadow-xs shrink-0 overflow-hidden p-1 border border-sky-400/40">
               {schoolProfile.logoUrl ? (
                 <img
                   src={schoolProfile.logoUrl}
@@ -159,15 +159,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   className="w-full h-full object-contain"
                 />
               ) : (
-                <School className="w-5 h-5" />
+                <School className="w-4 h-4" />
               )}
             </div>
             {!isSidebarCollapsed && (
               <div className="min-w-0 flex-1">
-                <h1 className="text-xs font-extrabold tracking-tight text-slate-900 dark:text-white uppercase truncate">
+                <h1 className="text-xs font-extrabold tracking-tight text-slate-900 dark:text-white uppercase truncate leading-tight">
                   Absensi Siswa SD
                 </h1>
-                <p className="text-[11px] font-semibold text-sky-800 dark:text-sky-300 truncate" title={schoolProfile.name}>
+                <p className="text-[10.5px] font-semibold text-sky-800 dark:text-sky-300 truncate leading-tight" title={schoolProfile.name}>
                   {schoolProfile.name}
                 </p>
               </div>
@@ -178,7 +178,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <button
             id="sidebar-collapse-toggle-button"
             onClick={toggleSidebarCollapsed}
-            className="hidden lg:flex p-1.5 rounded-lg text-sky-800 dark:text-sky-300 hover:text-sky-950 dark:hover:text-white hover:bg-sky-200/80 dark:hover:bg-sky-900/60 transition-colors shrink-0 active:scale-95"
+            className="hidden lg:flex p-1 rounded-lg text-sky-800 dark:text-sky-300 hover:text-sky-950 dark:hover:text-white hover:bg-sky-200/80 dark:hover:bg-sky-900/60 transition-colors shrink-0 active:scale-95"
             title={isSidebarCollapsed ? 'Perluas Menu Kiri' : 'Perkecil Menu Kiri'}
           >
             {isSidebarCollapsed ? (
@@ -191,124 +191,106 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Academic Year Info Pill (Only shown when expanded) */}
         {!isSidebarCollapsed ? (
-          <div className="px-4 py-2 bg-sky-200/70 dark:bg-sky-950/60 border-b border-sky-300/80 dark:border-sky-800 flex items-center justify-between text-xs transition-all">
+          <div className="px-3.5 py-1.5 bg-sky-200/70 dark:bg-sky-950/60 border-b border-sky-300/80 dark:border-sky-800 flex items-center justify-between text-[11px] transition-all shrink-0">
             <div className="flex items-center gap-1.5 text-sky-950 dark:text-sky-200 font-medium truncate">
-              <BookOpen className="w-3.5 h-3.5 text-sky-700 dark:text-sky-400 shrink-0" />
+              <BookOpen className="w-3 h-3 text-sky-700 dark:text-sky-400 shrink-0" />
               <span className="truncate">TA {schoolProfile.academicYear}</span>
             </div>
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-700/15 text-sky-900 dark:text-sky-200 border border-sky-400/40 shrink-0">
+            <span className="px-1.5 py-0.2 rounded text-[9.5px] font-bold bg-sky-700/15 text-sky-900 dark:text-sky-200 border border-sky-400/40 shrink-0">
               {schoolProfile.semester}
             </span>
           </div>
         ) : (
-          <div className="py-1 text-center border-b border-sky-300/80 dark:border-sky-800 text-[10px] font-bold text-sky-800 dark:text-sky-400">
+          <div className="py-0.5 text-center border-b border-sky-300/80 dark:border-sky-800 text-[9.5px] font-bold text-sky-800 dark:text-sky-400 shrink-0">
             TA {schoolProfile.academicYear.split('/')[0]}
           </div>
         )}
 
-        {/* Navigation Links */}
+        {/* Navigation Links - Clean, Compact, Zero Scroll Overflow */}
         <nav
-          className={`flex-1 space-y-1.5 overflow-y-auto ${
-            isSidebarCollapsed ? 'px-2 py-3' : 'px-3 py-4'
+          className={`flex-1 flex flex-col justify-between py-1.5 overflow-hidden ${
+            isSidebarCollapsed ? 'px-1.5' : 'px-2.5'
           }`}
         >
-          {navItems.map((item) => {
-            const isActive = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                id={`sidebar-nav-${item.id}`}
-                onClick={() => {
-                  setActiveTab(item.id);
-                  onCloseMobile();
-                }}
-                title={isSidebarCollapsed ? item.label : undefined}
-                className={`w-full flex items-center rounded-xl text-xs transition-all group relative ${
-                  isSidebarCollapsed
-                    ? 'justify-center p-2.5'
-                    : 'justify-between px-3.5 py-2.5'
-                } ${
-                  isActive
-                    ? 'bg-sky-700 hover:bg-sky-800 text-white shadow-xs font-bold border border-sky-800'
-                    : 'bg-white/90 dark:bg-sky-950/40 text-sky-950 dark:text-sky-200 border border-sky-300/80 dark:border-sky-800 hover:bg-sky-200/80 dark:hover:bg-sky-900/60 font-semibold'
-                }`}
-              >
-                <div
-                  className={`flex items-center gap-3 min-w-0 ${
-                    isSidebarCollapsed ? 'justify-center' : ''
+          <div className="space-y-1">
+            {navItems.map((item) => {
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  id={`sidebar-nav-${item.id}`}
+                  onClick={() => {
+                    setActiveTab(item.id);
+                    onCloseMobile();
+                  }}
+                  title={isSidebarCollapsed ? item.label : undefined}
+                  className={`w-full flex items-center rounded-xl text-xs transition-all group relative ${
+                    isSidebarCollapsed
+                      ? 'justify-center p-2'
+                      : 'justify-between px-3 py-2'
+                  } ${
+                    isActive
+                      ? 'bg-sky-700 hover:bg-sky-800 text-white shadow-xs font-bold border border-sky-800'
+                      : 'bg-white/90 dark:bg-sky-950/40 text-sky-950 dark:text-sky-200 border border-sky-300/80 dark:border-sky-800 hover:bg-sky-200/80 dark:hover:bg-sky-900/60 font-semibold'
                   }`}
                 >
-                  <span
-                    className={`transition-colors shrink-0 ${
-                      isActive
-                        ? 'text-white'
-                        : 'text-sky-700 dark:text-sky-400 group-hover:text-sky-900'
+                  <div
+                    className={`flex items-center gap-2.5 min-w-0 ${
+                      isSidebarCollapsed ? 'justify-center' : ''
                     }`}
                   >
-                    {item.icon}
-                  </span>
-                  {!isSidebarCollapsed && (
-                    <span className="truncate">{item.label}</span>
-                  )}
-                </div>
-
-                {/* Badge for Expanded Mode */}
-                {!isSidebarCollapsed && (
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    {item.badge !== undefined && (
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                          isActive
-                            ? 'bg-white text-sky-800'
-                            : 'bg-sky-200 dark:bg-sky-900 text-sky-950 dark:text-sky-100'
-                        }`}
-                      >
-                        {item.badge}
-                      </span>
+                    <span
+                      className={`transition-colors shrink-0 ${
+                        isActive
+                          ? 'text-white'
+                          : 'text-sky-700 dark:text-sky-400 group-hover:text-sky-900'
+                      }`}
+                    >
+                      {item.icon}
+                    </span>
+                    {!isSidebarCollapsed && (
+                      <span className="truncate text-[11.5px]">{item.label}</span>
                     )}
-                    {isActive && <ChevronRight className="w-3.5 h-3.5 text-white" />}
                   </div>
-                )}
 
-                {/* Badge Indicator Dot for Collapsed Mode */}
-                {isSidebarCollapsed && item.badge !== undefined && (
-                  <span
-                    className={`absolute top-1 right-1 w-2.5 h-2.5 rounded-full ${
-                      item.id === 'pengajuan-izin'
-                        ? 'bg-amber-400 ring-2 ring-white dark:ring-slate-900 animate-pulse'
-                        : 'bg-sky-700 ring-2 ring-white dark:ring-slate-900'
-                    }`}
-                  />
-                )}
-              </button>
-            );
-          })}
+                  {/* Badge for Expanded Mode */}
+                  {!isSidebarCollapsed && (
+                    <div className="flex items-center gap-1 shrink-0">
+                      {item.badge !== undefined && (
+                        <span
+                          className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold leading-none ${
+                            isActive
+                              ? 'bg-white text-sky-800'
+                              : 'bg-sky-200 dark:bg-sky-900 text-sky-950 dark:text-sky-100'
+                          }`}
+                        >
+                          {item.badge}
+                        </span>
+                      )}
+                      {isActive && <ChevronRight className="w-3.5 h-3.5 text-white" />}
+                    </div>
+                  )}
+
+                  {/* Badge Indicator Dot for Collapsed Mode */}
+                  {isSidebarCollapsed && item.badge !== undefined && (
+                    <span
+                      className={`absolute top-1 right-1 w-2 h-2 rounded-full ${
+                        item.id === 'pengajuan-izin'
+                          ? 'bg-amber-400 ring-2 ring-white dark:ring-slate-900 animate-pulse'
+                          : 'bg-sky-700 ring-2 ring-white dark:ring-slate-900'
+                      }`}
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </nav>
-
-        {/* Quick Toggle Button at Navigation Footer (Desktop) */}
-        <div className="hidden lg:block px-3 py-1.5">
-          <button
-            onClick={toggleSidebarCollapsed}
-            className={`w-full py-1.5 rounded-xl border border-sky-300 dark:border-sky-800 text-[11px] font-bold text-sky-800 dark:text-sky-300 hover:bg-sky-200/80 dark:hover:bg-sky-900/60 hover:text-sky-950 dark:hover:text-white transition-all flex items-center justify-center gap-1.5 active:scale-95 ${
-              isSidebarCollapsed ? 'px-1' : 'px-2.5'
-            }`}
-            title={isSidebarCollapsed ? 'Perluas Menu Kiri' : 'Perkecil Menu Kiri'}
-          >
-            {isSidebarCollapsed ? (
-              <ChevronsRight className="w-3.5 h-3.5 text-sky-700" />
-            ) : (
-              <>
-                <ChevronsLeft className="w-3.5 h-3.5 text-sky-700" />
-                <span>Perkecil Menu Kiri</span>
-              </>
-            )}
-          </button>
-        </div>
 
         {/* Bottom Current User Card & Switcher Trigger */}
         <div
-          className={`border-t border-sky-300/80 dark:border-sky-800 bg-sky-200/50 dark:bg-sky-950/50 ${
-            isSidebarCollapsed ? 'p-2 space-y-1.5' : 'p-3 flex items-center gap-2'
+          className={`border-t border-sky-300/80 dark:border-sky-800 bg-sky-200/50 dark:bg-sky-950/50 shrink-0 ${
+            isSidebarCollapsed ? 'p-1.5 space-y-1' : 'p-2.5 flex items-center gap-2'
           }`}
         >
           <button
