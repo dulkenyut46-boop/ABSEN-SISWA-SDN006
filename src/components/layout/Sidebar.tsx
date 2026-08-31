@@ -151,15 +151,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
           }`}
         >
           <div className={`flex items-center gap-3 min-w-0 ${isSidebarCollapsed ? 'justify-center' : ''}`}>
-            <div className="w-10 h-10 rounded-xl bg-sky-700 flex items-center justify-center text-white shadow-xs shrink-0">
-              <School className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-sky-700 flex items-center justify-center text-white shadow-xs shrink-0 overflow-hidden p-1 border border-sky-400/40">
+              {schoolProfile.logoUrl ? (
+                <img
+                  src={schoolProfile.logoUrl}
+                  alt={schoolProfile.name}
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <School className="w-5 h-5" />
+              )}
             </div>
             {!isSidebarCollapsed && (
               <div className="min-w-0 flex-1">
                 <h1 className="text-xs font-extrabold tracking-tight text-slate-900 dark:text-white uppercase truncate">
                   Absensi Siswa SD
                 </h1>
-                <p className="text-[11px] font-semibold text-sky-800 dark:text-sky-300 truncate">
+                <p className="text-[11px] font-semibold text-sky-800 dark:text-sky-300 truncate" title={schoolProfile.name}>
                   {schoolProfile.name}
                 </p>
               </div>

@@ -1,4 +1,5 @@
 import { Student, ClassRoom, AttendanceRecord, LeaveRequest, SchoolProfile, UserSession, RolePermissionsMatrix, NationalHoliday } from '../types';
+import { TUT_WURI_HANDAYANI_LOGO, LOGO_SD_MERAH_PUTIH } from '../utils/logoPresets';
 
 export const initialSchoolProfile: SchoolProfile = {
   name: 'SD NEGERI 01 HARAPAN BANGSA',
@@ -9,6 +10,10 @@ export const initialSchoolProfile: SchoolProfile = {
   akreditasi: 'A (Unggul)',
   skAkreditasi: '1347/BAN-SM/SK/2023',
   kurikulum: 'Kurikulum Merdeka',
+
+  // Identitas Visual & Logo Resmi
+  logoUrl: TUT_WURI_HANDAYANI_LOGO,
+  secondaryLogoUrl: LOGO_SD_MERAH_PUTIH,
 
   // Wilayah Administratif & Alamat Lengkap
   street: 'Jl. Merdeka Raya No. 45, RT. 004 / RW. 002',

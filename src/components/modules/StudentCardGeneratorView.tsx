@@ -384,8 +384,16 @@ export const StudentCardGeneratorView: React.FC = () => {
                     >
                       <div className="flex items-center gap-2">
                         {/* School Icon Emblem */}
-                        <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center text-amber-300 font-black shrink-0 shadow-xs">
-                          <School className="w-4 h-4 text-white" />
+                        <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center text-amber-300 font-black shrink-0 shadow-xs overflow-hidden p-0.5">
+                          {schoolProfile.logoUrl ? (
+                            <img
+                              src={schoolProfile.logoUrl}
+                              alt="Logo"
+                              className="w-full h-full object-contain"
+                            />
+                          ) : (
+                            <School className="w-4 h-4 text-white" />
+                          )}
                         </div>
                         <div className="min-w-0">
                           <div className="text-[7px] tracking-wider uppercase font-semibold text-white/80 leading-none">

@@ -6,6 +6,8 @@ import { ToastContainer } from './components/common/ToastContainer';
 import { QRScannerModal } from './components/common/QRScannerModal';
 import { UserSwitcherModal } from './components/common/UserSwitcherModal';
 import { LoginDashboard } from './components/auth/LoginDashboard';
+import { SplashScreen } from './components/common/SplashScreen';
+import { AnimatePresence } from 'motion/react';
 import {
   Minimize2,
   Maximize2,
@@ -31,6 +33,8 @@ import { SettingsView } from './components/modules/SettingsView';
 const MainLayout: React.FC = () => {
   const {
     isAuthenticated,
+    showSplash,
+    setShowSplash,
     activeTab,
     darkMode,
     dashboardSize,
@@ -59,16 +63,6 @@ const MainLayout: React.FC = () => {
       document.documentElement.classList.remove('dark');
     }
   }, [darkMode]);
-
-  // If user is not authenticated, show Login Dashboard
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-[#d8ecfa] dark:bg-[#071324] text-slate-900 dark:text-sky-100 flex flex-col font-sans">
-        <ToastContainer />
-        <LoginDashboard />
-      </div>
-    );
-  }
 
   // Handle horizontal dragging to shrink/expand the left sidebar menu
   useEffect(() => {
@@ -104,6 +98,21 @@ const MainLayout: React.FC = () => {
       window.removeEventListener('mouseup', handleMouseUp);
     };
   }, [isSidebarDragging, setSidebarWidth, setIsSidebarCollapsed]);
+
+  // Initial Opening Animation (Splash Screen) with animated "ABSENSI SISWA" & School Name
+  if (showSplash) {
+    return <SplashScreen onComplete={() => setShowSplash(false)} />;
+  }
+
+  // If user is not authenticated, show Login Dashboard
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-[#d8ecfa] dark:bg-[#071324] text-slate-900 dark:text-sky-100 flex flex-col font-sans">
+        <ToastContainer />
+        <LoginDashboard />
+      </div>
+    );
+  }
 
   // Render view based on activeTab
   const renderActiveView = () => {

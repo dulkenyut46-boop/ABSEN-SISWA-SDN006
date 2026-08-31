@@ -35,6 +35,7 @@ import {
 
 export const DashboardView: React.FC = () => {
   const {
+    schoolProfile,
     students,
     classes,
     attendanceRecords,
@@ -47,6 +48,7 @@ export const DashboardView: React.FC = () => {
     dashboardSize,
     setDashboardSize,
     toggleDashboardSize,
+    replayIntro,
   } = useApp() as any;
 
   // Filter students by selected class if not 'all'
@@ -197,58 +199,94 @@ export const DashboardView: React.FC = () => {
 
   return (
     <div className="p-4 sm:p-6 md:p-7 rounded-3xl bg-[#e0f0fa] dark:bg-[#0a182f] border border-sky-300 dark:border-sky-800 space-y-6 pb-12 animate-in fade-in duration-300 shadow-xs">
-      {/* Top Welcome Banner with Light Blue Gradient */}
-      <div className="rounded-2xl bg-gradient-to-r from-sky-700 via-sky-600 to-blue-800 text-white p-6 md:p-7 shadow-sm relative overflow-hidden border border-sky-400/40">
+      {/* Top Welcome & School Profile Banner */}
+      <div className="rounded-2xl bg-gradient-to-r from-sky-700 via-sky-600 to-blue-800 text-white p-5 sm:p-6 md:p-7 shadow-sm relative overflow-hidden border border-sky-400/40">
         <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-white/20 text-[11px] font-semibold text-sky-50 border border-white/20">
-              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-              Sistem Informasi Presensi Digital Terpadu
+          <div className="flex items-start sm:items-center gap-4 max-w-2xl">
+            {/* School Official Logo Box */}
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white/10 dark:bg-sky-950/80 border border-white/20 p-2 shrink-0 flex items-center justify-center shadow-md backdrop-blur-xs relative group">
+              {schoolProfile?.logoUrl ? (
+                <img
+                  src={schoolProfile.logoUrl}
+                  alt={schoolProfile.name}
+                  className="w-full h-full object-contain filter drop-shadow"
+                />
+              ) : (
+                <div className="w-full h-full rounded-xl bg-sky-800 flex items-center justify-center text-white">
+                  <Sparkles className="w-7 h-7 text-amber-300" />
+                </div>
+              )}
             </div>
-            <h2 className="text-xl md:text-2xl font-bold tracking-tight text-white">
-              Rekapitulasi Kehadiran Akurat & Cepat
-            </h2>
-            <p className="text-sky-100 text-xs md:text-sm leading-relaxed">
-              Pencatatan presensi harian, pemindaian kartu QR siswa otomatis, dan rekapitulasi data siap cetak untuk pelaporan sekolah dasar.
-            </p>
+
+            <div className="space-y-1.5 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-amber-400 text-slate-950 shadow-2xs">
+                  {schoolProfile?.akreditasi || 'Akreditasi A'}
+                </span>
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-mono font-bold bg-white/20 text-white border border-white/20">
+                  NPSN: {schoolProfile?.npsn || '-'}
+                </span>
+                <span className="text-[10px] sm:text-xs text-sky-200 font-semibold hidden sm:inline">
+                  • TA {schoolProfile?.academicYear} ({schoolProfile?.semester})
+                </span>
+              </div>
+
+              <h2 className="text-lg sm:text-xl md:text-2xl font-black tracking-tight text-white uppercase leading-tight truncate" title={schoolProfile?.name}>
+                {schoolProfile?.name || 'SD NEGERI 01 HARAPAN BANGSA'}
+              </h2>
+
+              <p className="text-sky-100 text-xs leading-relaxed line-clamp-2">
+                {schoolProfile?.motto || 'Sistem Presensi Siswa Digital Terpadu — Cerdas, Berkarakter, dan Berakhlak Mulia'}
+              </p>
+            </div>
           </div>
 
           {/* Quick Actions Buttons */}
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto justify-start lg:justify-end">
             <button
               id="dashboard-start-attendance-button"
               onClick={() => setActiveTab('presensi-harian')}
-              className="px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition-all shadow-xs flex items-center gap-2 active:scale-95"
+              className="px-3.5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition-all shadow-xs flex items-center gap-1.5 active:scale-95 cursor-pointer"
             >
               <ClipboardList className="w-4 h-4" />
-              <span>Input Presensi Hari Ini</span>
+              <span>Input Presensi</span>
+            </button>
+
+            <button
+              id="dashboard-edit-logo-button"
+              onClick={() => setActiveTab('pengaturan')}
+              className="px-3.5 py-2.5 rounded-xl bg-white/20 hover:bg-white/30 border border-white/25 text-white font-bold text-xs transition-all shadow-xs flex items-center gap-1.5 active:scale-95 cursor-pointer"
+              title="Ubah Logo & Profil Sekolah"
+            >
+              <Sparkles className="w-4 h-4 text-amber-300" />
+              <span>Ubah Logo</span>
             </button>
 
             <button
               id="dashboard-open-reports-button"
               onClick={() => setActiveTab('rekap-laporan')}
-              className="px-4 py-2.5 rounded-xl bg-sky-800 hover:bg-sky-900 border border-sky-400/40 text-white font-bold text-xs transition-all shadow-xs flex items-center gap-2 active:scale-95"
+              className="px-3.5 py-2.5 rounded-xl bg-sky-900/80 hover:bg-sky-900 border border-sky-400/40 text-white font-bold text-xs transition-all shadow-xs flex items-center gap-1.5 active:scale-95 cursor-pointer"
             >
               <FileSpreadsheet className="w-4 h-4 text-amber-300" />
-              <span>Rekap Laporan</span>
+              <span>Kop Surat Laporan</span>
             </button>
 
             {/* Quick Shrink / Expand Button */}
             <button
               id="dashboard-shrink-toggle-button"
               onClick={toggleDashboardSize}
-              className="px-3.5 py-2.5 rounded-xl bg-white/20 hover:bg-white/30 border border-white/25 text-white font-bold text-xs transition-all shadow-xs flex items-center gap-1.5 active:scale-95"
-              title="Perkecil atau perbesar lebar tampilan dasbor sebelah kanan"
+              className="px-3 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 text-white font-bold text-xs transition-all shadow-xs flex items-center gap-1 active:scale-95 cursor-pointer"
+              title="Perkecil atau perbesar lebar tampilan dasbor"
             >
               {dashboardSize === 'full' ? (
                 <>
-                  <Minimize2 className="w-4 h-4 text-amber-300" />
-                  <span>Perkecil Dasbor</span>
+                  <Minimize2 className="w-3.5 h-3.5 text-amber-300" />
+                  <span className="hidden sm:inline">Perkecil</span>
                 </>
               ) : (
                 <>
-                  <Maximize2 className="w-4 h-4 text-amber-300" />
-                  <span>Perbesar Penuh</span>
+                  <Maximize2 className="w-3.5 h-3.5 text-amber-300" />
+                  <span className="hidden sm:inline">Perbesar</span>
                 </>
               )}
             </button>

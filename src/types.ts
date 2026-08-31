@@ -80,6 +80,10 @@ export interface SchoolProfile {
   skAkreditasi?: string; // e.g. '1347/BAN-SM/SK/2023'
   kurikulum?: string; // e.g. 'Kurikulum Merdeka'
 
+  // Identitas Visual & Logo
+  logoUrl?: string; // Logo utama sekolah (PNG/JPG/SVG/DataURL)
+  secondaryLogoUrl?: string; // Logo instansi pendamping (Tut Wuri / Kemenag / Pemda)
+
   // Alamat & Wilayah Geografis Lengkap
   street: string; // Jalan, RT/RW, No, Dusun
   village: string; // Desa / Kelurahan

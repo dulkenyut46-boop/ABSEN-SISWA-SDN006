@@ -26,16 +26,19 @@ import {
   Copy,
   ShieldCheck,
   Database,
+  Sparkles,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { Modal } from '../common/Modal';
 import { SchoolProfile } from '../../types';
 import { RolePermissionsManager } from './RolePermissionsManager';
+import { LogoManager } from './LogoManager';
 
 export const SettingsView: React.FC = () => {
-  const { schoolProfile, updateSchoolProfile, resetDataToDefault, setActiveTab } = useApp();
+  const { schoolProfile, updateSchoolProfile, resetDataToDefault, setActiveTab, replayIntro } = useApp();
 
   const [formData, setFormData] = useState<SchoolProfile>({ ...schoolProfile });
-  const [activeSubTab, setActiveSubTab] = useState<'profil' | 'alamat' | 'kontak' | 'sdm' | 'jadwal' | 'visimisi' | 'hak-akses'>('profil');
+  const [activeSubTab, setActiveSubTab] = useState<'logo' | 'profil' | 'alamat' | 'kontak' | 'sdm' | 'jadwal' | 'visimisi' | 'hak-akses'>('logo');
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 
@@ -108,8 +111,16 @@ export const SettingsView: React.FC = () => {
       {/* Header Banner */}
       <div className="p-6 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-[#4a0404] text-white flex items-center justify-center shadow-sm shrink-0">
-            <School className="w-8 h-8 text-amber-200" />
+          <div className="w-16 h-16 rounded-2xl bg-sky-700 text-white flex items-center justify-center p-2 shadow-sm shrink-0 overflow-hidden border border-sky-600">
+            {formData.logoUrl ? (
+              <img
+                src={formData.logoUrl}
+                alt="Logo Sekolah"
+                className="max-h-full max-w-full object-contain filter drop-shadow"
+              />
+            ) : (
+              <School className="w-8 h-8 text-amber-200" />
+            )}
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
@@ -133,27 +144,55 @@ export const SettingsView: React.FC = () => {
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={copyFullAddress}
-          className="px-3 py-1.5 bg-stone-50 dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-stone-700 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 shrink-0"
-          title="Salin Alamat Lengkap Sekolah"
-        >
-          {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-stone-500" />}
-          <span>{isCopied ? 'Alamat Disalin!' : 'Salin Alamat'}</span>
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            id="settings-edit-logo-quick-btn"
+            onClick={() => setActiveSubTab('logo')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 ${
+              activeSubTab === 'logo'
+                ? 'bg-sky-700 text-white'
+                : 'bg-sky-50 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 border border-sky-300 dark:border-sky-800'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+            <span>Kelola Logo</span>
+          </button>
+
+          <button
+            type="button"
+            id="settings-preview-splash-btn"
+            onClick={replayIntro}
+            className="px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+            title="Lihat Simulasi Animasi Pembuka Aplikasi dengan Nama Sekolah ini"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+            <span>Preview Animasi</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={copyFullAddress}
+            className="px-3 py-1.5 bg-stone-50 dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-stone-700 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5"
+            title="Salin Alamat Lengkap Sekolah"
+          >
+            {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-stone-500" />}
+            <span>{isCopied ? 'Alamat Disalin!' : 'Salin Alamat'}</span>
+          </button>
+        </div>
       </div>
 
       {/* Navigation Sub-Tabs */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-sky-200 dark:border-sky-800">
         {[
-          { id: 'profil', label: '1. Identitas & Legalitas', icon: School },
-          { id: 'alamat', label: '2. Alamat & Wilayah Geografis', icon: MapPin },
-          { id: 'kontak', label: '3. Instansi & Kontak Resmi', icon: Phone },
-          { id: 'sdm', label: '4. Kepala Sekolah & Operator', icon: UserCheck },
-          { id: 'jadwal', label: '5. Jam Masuk & Presensi', icon: Clock },
-          { id: 'visimisi', label: '6. Visi, Misi & Karakter', icon: Award },
-          { id: 'hak-akses', label: '7. Hak Akses (Admin & Guru)', icon: ShieldCheck },
+          { id: 'logo', label: '1. 🎨 Ubah & Kelola Logo', icon: Sparkles },
+          { id: 'profil', label: '2. Identitas & Legalitas', icon: School },
+          { id: 'alamat', label: '3. Alamat & Wilayah Geografis', icon: MapPin },
+          { id: 'kontak', label: '4. Instansi & Kontak Resmi', icon: Phone },
+          { id: 'sdm', label: '5. Kepala Sekolah & Operator', icon: UserCheck },
+          { id: 'jadwal', label: '6. Jam Masuk & Presensi', icon: Clock },
+          { id: 'visimisi', label: '7. Visi, Misi & Karakter', icon: Award },
+          { id: 'hak-akses', label: '8. Hak Akses (Admin & Guru)', icon: ShieldCheck },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeSubTab === tab.id;
@@ -175,8 +214,10 @@ export const SettingsView: React.FC = () => {
         })}
       </div>
 
-      {/* SUBTAB 7: Hak Akses & RBAC */}
-      {activeSubTab === 'hak-akses' ? (
+      {/* SUBTAB CONTENT */}
+      {activeSubTab === 'logo' ? (
+        <LogoManager />
+      ) : activeSubTab === 'hak-akses' ? (
         <RolePermissionsManager />
       ) : (
         <form onSubmit={handleSubmit} className="space-y-6">

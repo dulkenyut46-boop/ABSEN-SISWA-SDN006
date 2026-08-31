@@ -497,30 +497,68 @@ export const ReportsView: React.FC = () => {
         className="print-container bg-white dark:bg-slate-900 rounded-2xl border border-sky-200/80 dark:border-sky-900/60 shadow-xs p-6 md:p-8 space-y-6"
       >
         {/* Formal Elementary School KOP Surat Header */}
-        <div className="border-b-2 border-slate-900 dark:border-slate-200 pb-4 text-center space-y-1">
-          <div className="flex items-center justify-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-sky-600 text-white flex items-center justify-center text-xl font-bold">
-              <School className="w-7 h-7" />
+        <div className="border-b-4 border-double border-slate-900 dark:border-slate-300 pb-4 text-center space-y-1">
+          <div className="flex items-center justify-between gap-4">
+            {/* Left Logo (Logo Utama Sekolah / Dinas) */}
+            <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 flex items-center justify-center">
+              {schoolProfile.logoUrl ? (
+                <img
+                  src={schoolProfile.logoUrl}
+                  alt="Logo Sekolah"
+                  className="max-h-full max-w-full object-contain"
+                />
+              ) : (
+                <div className="w-14 h-14 rounded-xl bg-sky-700 text-white flex items-center justify-center text-xl font-bold shadow-xs">
+                  <School className="w-8 h-8" />
+                </div>
+              )}
             </div>
-            <div className="text-left">
-              <h3 className="text-sm md:text-base font-black tracking-wide text-slate-900 dark:text-white uppercase">
+
+            {/* Center Heading */}
+            <div className="flex-1 text-center min-w-0 px-2">
+              <h3 className="text-xs sm:text-sm md:text-base font-black tracking-wide text-slate-900 dark:text-white uppercase leading-tight">
                 {schoolProfile.provinsiDinas ? schoolProfile.provinsiDinas.toUpperCase() : `PEMERINTAH ${schoolProfile.regency ? schoolProfile.regency.toUpperCase() : 'DAERAH'}`}
               </h3>
-              <h4 className="text-xs md:text-sm font-extrabold text-sky-700 dark:text-sky-400 uppercase">
+              <h4 className="text-[11px] sm:text-xs md:text-sm font-extrabold text-sky-700 dark:text-sky-400 uppercase leading-tight mt-0.5">
                 {schoolProfile.dinasPendidikan || 'DINAS PENDIDIKAN DAN KEBUDAYAAN'}
               </h4>
-              <h2 className="text-base md:text-lg font-black text-slate-900 dark:text-white uppercase">
+              <h2 className="text-sm sm:text-base md:text-xl font-black text-slate-950 dark:text-white uppercase tracking-tight leading-snug mt-0.5">
                 {schoolProfile.name}
               </h2>
+              <p className="text-[10px] sm:text-[11px] text-slate-600 dark:text-slate-400 pt-1 leading-normal">
+                {schoolProfile.address}
+              </p>
+              <p className="text-[9.5px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+                Telp: {schoolProfile.phone} • Email: {schoolProfile.email} • Website: {schoolProfile.website || 'https://kemdikbud.go.id'}
+              </p>
+              <p className="text-[9.5px] sm:text-[10px] text-slate-600 dark:text-slate-400 font-semibold mt-0.5">
+                NPSN: <strong>{schoolProfile.npsn}</strong> {schoolProfile.nss ? `• NSS: ${schoolProfile.nss}` : ''} • Akreditasi: <strong>{schoolProfile.akreditasi || 'A (Unggul)'}</strong> • Kurikulum: <strong>{schoolProfile.kurikulum || 'Kurikulum Merdeka'}</strong>
+              </p>
+            </div>
+
+            {/* Right Logo (Logo Tut Wuri Handayani / Pendamping) */}
+            <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 flex items-center justify-center">
+              {schoolProfile.secondaryLogoUrl ? (
+                <img
+                  src={schoolProfile.secondaryLogoUrl}
+                  alt="Logo Pendamping"
+                  className="max-h-full max-w-full object-contain"
+                />
+              ) : schoolProfile.logoUrl ? (
+                <img
+                  src={schoolProfile.logoUrl}
+                  alt="Logo Sekolah"
+                  className="max-h-full max-w-full object-contain opacity-90"
+                />
+              ) : (
+                <div className="w-14 h-14 rounded-xl bg-sky-800 text-white flex items-center justify-center text-xl font-bold shadow-xs">
+                  <School className="w-8 h-8" />
+                </div>
+              )}
             </div>
           </div>
-          <p className="text-[11px] text-slate-600 dark:text-slate-400 pt-1">
-            {schoolProfile.address} • Telp: {schoolProfile.phone} • Email: {schoolProfile.email}
-          </p>
-          <p className="text-[10px] text-slate-500 dark:text-slate-400">
-            NPSN: <strong>{schoolProfile.npsn}</strong> {schoolProfile.nss ? `• NSS: ${schoolProfile.nss}` : ''} • Akreditasi: <strong>{schoolProfile.akreditasi || 'A'}</strong> • Kurikulum: <strong>{schoolProfile.kurikulum || 'Kurikulum Merdeka'}</strong>
-          </p>
-          <div className="pt-2 text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
+
+          <div className="pt-2 text-xs font-black uppercase tracking-wider text-slate-900 dark:text-slate-100">
             LAPORAN REKAPITULASI KEHADIRAN SISWA BULAN {periodMode === 'monthly' || periodMode === 'biweekly_1' || periodMode === 'biweekly_2' ? formatMonthTitle(selectedMonth).toUpperCase() : 'BERJALAN'}
           </div>
           <div className="text-xs text-slate-600 dark:text-slate-400">

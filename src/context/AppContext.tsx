@@ -36,6 +36,11 @@ interface AppContextType {
   darkMode: boolean;
   setDarkMode: (val: boolean | ((prev: boolean) => boolean)) => void;
 
+  // Splash Screen Intro Animation
+  showSplash: boolean;
+  setShowSplash: (val: boolean) => void;
+  replayIntro: () => void;
+
   // Authentication & Session
   isAuthenticated: boolean;
   setIsAuthenticated: (val: boolean) => void;
@@ -217,13 +222,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Navigation
   const [activeTab, setActiveTab] = useState<NavigationTab>('dashboard');
 
+  // Splash Screen Opening Animation State (plays on initial app load)
+  const [showSplash, setShowSplash] = useState<boolean>(true);
+
+  const replayIntro = () => {
+    setShowSplash(true);
+  };
+
   // Authentication State
   const [isAuthenticated, setIsAuthenticatedState] = useState<boolean>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.IS_AUTHENTICATED);
       if (saved !== null) return JSON.parse(saved);
     } catch {}
-    return true; // Start authenticated so first-time users can jump straight in or test logout
+    return false; // Default: show login screen after intro
   });
 
   const setIsAuthenticated = (val: boolean) => {
@@ -1767,6 +1779,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setActiveTab,
         darkMode,
         setDarkMode,
+        showSplash,
+        setShowSplash,
+        replayIntro,
         isAuthenticated,
         setIsAuthenticated,
         login,
