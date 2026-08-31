@@ -1,0 +1,120 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    --font-heading: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+  }
+
+  body {
+    font-family: var(--font-sans);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+  }
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.4);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 114, 128, 0.6);
+}
+
+/* Print Stylesheet for Formal Elementary School Attendance Report & Student ID Cards */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 11pt !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .no-print, nav, aside, header, .topbar-actions, button, .modal-backdrop {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .print-container {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: white !important;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Student ID Card Printing Grid */
+  .student-cards-print-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 85.6mm) !important;
+    gap: 6mm 4mm !important;
+    justify-content: center !important;
+    margin: 0 auto !important;
+    padding: 2mm 0 !important;
+  }
+
+  .student-cards-print-grid.single-card-mode {
+    grid-template-columns: 85.6mm !important;
+  }
+
+  .student-cards-print-grid.foldable-mode {
+    grid-template-columns: repeat(2, 85.6mm) !important;
+    gap: 4mm 1mm !important;
+  }
+
+  .student-card-item {
+    width: 85.6mm !important;
+    height: 54mm !important;
+    min-height: 54mm !important;
+    max-height: 54mm !important;
+    box-sizing: border-box !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    border-radius: 3mm !important;
+    overflow: hidden !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+  }
+
+  .crop-guide-print {
+    outline: 1px dashed #94a3b8 !important;
+    outline-offset: 1mm !important;
+  }
+
+  @page {
+    size: auto;
+    margin: 6mm;
+  }
+
+  .sunday-col {
+    background-color: #cbd5e1 !important;
+    color: #475569 !important;
+  }
+}
+
+.print-only {
+  display: none;
+}
