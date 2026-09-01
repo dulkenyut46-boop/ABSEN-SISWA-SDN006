@@ -51,6 +51,8 @@ export const ClassMasterView: React.FC = () => {
     addClass,
     updateClass,
     deleteClass,
+    deleteAllClasses,
+    clearAllClassTeachers,
     batchImportClasses,
     setActiveTab,
     setSelectedClassId,
@@ -61,6 +63,7 @@ export const ClassMasterView: React.FC = () => {
   const [editingClass, setEditingClass] = useState<ClassRoom | null>(null);
   const [deletingClass, setDeletingClass] = useState<ClassRoom | null>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isClearWaliModalOpen, setIsClearWaliModalOpen] = useState(false);
 
   // Quick Import State
   const [importFile, setImportFile] = useState<File | null>(null);
@@ -421,6 +424,17 @@ export const ClassMasterView: React.FC = () => {
           >
             <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
             <span>Ekspor Excel</span>
+          </button>
+
+          <button
+            id="clear-all-wali-kelas-btn"
+            onClick={() => setIsClearWaliModalOpen(true)}
+            disabled={classes.length === 0}
+            className="flex-1 sm:flex-none px-3 py-2 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+            title="Kosongkan nama & NIP guru wali kelas di semua rombel"
+          >
+            <Trash2 className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
+            <span>Kosongkan Semua Wali Kelas</span>
           </button>
 
           <button
@@ -883,6 +897,43 @@ export const ClassMasterView: React.FC = () => {
                 className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold cursor-pointer"
               >
                 Hapus
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Clear All Class Teachers Modal */}
+      {isClearWaliModalOpen && (
+        <Modal
+          isOpen={isClearWaliModalOpen}
+          onClose={() => setIsClearWaliModalOpen(false)}
+          title="Kosongkan Semua Guru Wali Kelas"
+          maxWidth="sm"
+        >
+          <div className="space-y-4">
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              Apakah Anda yakin ingin mengosongkan penetapan nama guru dan NIP wali kelas di <strong>seluruh {classes.length} rombongan belajar</strong>? Struktur rombel dan siswa tidak akan dihapus.
+            </p>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setIsClearWaliModalOpen(false)}
+                className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                id="confirm-clear-all-wali-btn"
+                onClick={() => {
+                  clearAllClassTeachers();
+                  setIsClearWaliModalOpen(false);
+                }}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
+              >
+                Ya, Kosongkan Wali Kelas
               </button>
             </div>
           </div>

@@ -23,6 +23,8 @@ import {
   Award,
   FileUp,
   Download,
+  AlertTriangle,
+  CheckCircle2,
 } from 'lucide-react';
 import { downloadStudentTemplate, exportStudentsToExcel } from '../../utils/excelHelpers';
 
@@ -33,6 +35,7 @@ export const StudentsMasterView: React.FC = () => {
     addStudent,
     updateStudent,
     deleteStudent,
+    deleteAllStudents,
     attendanceRecords,
     setActiveTab,
   } = useApp();
@@ -51,6 +54,9 @@ export const StudentsMasterView: React.FC = () => {
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [viewingStudent, setViewingStudent] = useState<Student | null>(null);
   const [deletingStudent, setDeletingStudent] = useState<Student | null>(null);
+  const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = useState(false);
+  const [deleteAllOption, setDeleteAllOption] = useState<'all' | 'filtered'>('all');
+  const [confirmSafetyCheck, setConfirmSafetyCheck] = useState(false);
 
   // Form State for Add / Edit
   const [formData, setFormData] = useState({
@@ -270,6 +276,25 @@ export const StudentsMasterView: React.FC = () => {
           >
             <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
             <span>Ekspor Excel</span>
+          </button>
+
+          <button
+            id="delete-all-students-button"
+            onClick={() => {
+              setDeleteAllOption(selectedClass !== 'all' ? 'filtered' : 'all');
+              setConfirmSafetyCheck(false);
+              setIsDeleteAllModalOpen(true);
+            }}
+            disabled={students.length === 0}
+            className={`flex-1 sm:flex-none px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              students.length === 0
+                ? 'bg-stone-100 dark:bg-stone-800/60 text-stone-400 border border-stone-200 dark:border-stone-700 cursor-not-allowed opacity-60'
+                : 'bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/50 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800 active:scale-95'
+            }`}
+            title="Hapus semua atau sebagian data siswa"
+          >
+            <Trash2 className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+            <span>Hapus Semua Siswa</span>
           </button>
 
           <button
@@ -915,6 +940,152 @@ export const StudentsMasterView: React.FC = () => {
                 className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-colors shadow-xs cursor-pointer"
               >
                 Ya, Hapus Siswa
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Delete ALL Students Confirmation Modal */}
+      {isDeleteAllModalOpen && (
+        <Modal
+          isOpen={isDeleteAllModalOpen}
+          onClose={() => {
+            setIsDeleteAllModalOpen(false);
+            setConfirmSafetyCheck(false);
+          }}
+          title="Hapus Semua Data Siswa"
+          maxWidth="md"
+        >
+          <div className="space-y-5">
+            {/* Warning header banner */}
+            <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 flex items-start gap-3">
+              <div className="p-2 rounded-xl bg-rose-100 dark:bg-rose-900 text-rose-700 dark:text-rose-300 shrink-0">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div className="text-xs space-y-1">
+                <h4 className="font-extrabold text-rose-900 dark:text-rose-200 text-sm">
+                  Peringatan Tindakan Permanen!
+                </h4>
+                <p className="text-rose-700 dark:text-rose-300 leading-relaxed">
+                  Tindakan ini akan menghapus data siswa secara permanen dari basis data sistem, termasuk seluruh rekaman absensi harian dan riwayat izin terkait.
+                </p>
+              </div>
+            </div>
+
+            {/* Scope Selection */}
+            <div className="space-y-2">
+              <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                Pilih Cakupan Penghapusan:
+              </label>
+
+              <div className="space-y-2">
+                <label
+                  className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                    deleteAllOption === 'all'
+                      ? 'border-rose-500 bg-rose-50/60 dark:bg-rose-950/30'
+                      : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="delete_scope"
+                    checked={deleteAllOption === 'all'}
+                    onChange={() => setDeleteAllOption('all')}
+                    className="mt-0.5 text-rose-600 focus:ring-rose-500"
+                  />
+                  <div className="text-xs">
+                    <span className="font-bold text-slate-900 dark:text-white block">
+                      Hapus Seluruh Siswa di Semua Kelas
+                    </span>
+                    <span className="text-slate-500 dark:text-slate-400">
+                      Mengosongkan seluruh database ({students.length} siswa di seluruh rombel kelas).
+                    </span>
+                  </div>
+                </label>
+
+                {selectedClass !== 'all' && (
+                  <label
+                    className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                      deleteAllOption === 'filtered'
+                        ? 'border-rose-500 bg-rose-50/60 dark:bg-rose-950/30'
+                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="delete_scope"
+                      checked={deleteAllOption === 'filtered'}
+                      onChange={() => setDeleteAllOption('filtered')}
+                      className="mt-0.5 text-rose-600 focus:ring-rose-500"
+                    />
+                    <div className="text-xs">
+                      <span className="font-bold text-slate-900 dark:text-white block">
+                        Hapus Hanya Siswa di {classes.find((c) => c.id === selectedClass)?.name || 'Kelas Terpilih'}
+                      </span>
+                      <span className="text-slate-500 dark:text-slate-400">
+                        Menghapus {students.filter((s) => s.classId === selectedClass).length} siswa pada kelas yang sedang difilter.
+                      </span>
+                    </div>
+                  </label>
+                )}
+              </div>
+            </div>
+
+            {/* Safety Checkbox */}
+            <div className="pt-1">
+              <label className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 cursor-pointer">
+                <input
+                  id="confirm-delete-all-students-checkbox"
+                  type="checkbox"
+                  checked={confirmSafetyCheck}
+                  onChange={(e) => setConfirmSafetyCheck(e.target.checked)}
+                  className="mt-0.5 rounded text-rose-600 focus:ring-rose-500"
+                />
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 select-none">
+                  Saya memahami bahwa data siswa yang dihapus tidak dapat dipulihkan kembali kecuali melalui berkas cadangan (Backup JSON).
+                </span>
+              </label>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsDeleteAllModalOpen(false);
+                  setConfirmSafetyCheck(false);
+                }}
+                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                id="execute-delete-all-students-btn"
+                type="button"
+                disabled={!confirmSafetyCheck}
+                onClick={() => {
+                  if (!confirmSafetyCheck) return;
+                  if (deleteAllOption === 'filtered' && selectedClass !== 'all') {
+                    deleteAllStudents(selectedClass);
+                  } else {
+                    deleteAllStudents();
+                  }
+                  setIsDeleteAllModalOpen(false);
+                  setConfirmSafetyCheck(false);
+                }}
+                className={`px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-2 shadow-xs cursor-pointer ${
+                  confirmSafetyCheck
+                    ? 'bg-rose-600 hover:bg-rose-700 text-white active:scale-95'
+                    : 'bg-rose-200 dark:bg-rose-950 text-rose-400 dark:text-rose-600 cursor-not-allowed'
+                }`}
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>
+                  {deleteAllOption === 'filtered' && selectedClass !== 'all'
+                    ? `Hapus ${students.filter((s) => s.classId === selectedClass).length} Siswa Kelas Ini`
+                    : `Hapus Semua (${students.length} Siswa)`}
+                </span>
               </button>
             </div>
           </div>

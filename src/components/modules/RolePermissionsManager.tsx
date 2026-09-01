@@ -32,6 +32,7 @@ export const RolePermissionsManager: React.FC = () => {
     addUser,
     updateUser,
     deleteUser,
+    deleteAllTeachers,
     toggleUserStatus,
     rolePermissions,
     updateRolePermissions,
@@ -45,6 +46,12 @@ export const RolePermissionsManager: React.FC = () => {
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [showPasswordInForm, setShowPasswordInForm] = useState(false);
   const [activeTabSection, setActiveTabSection] = useState<'matrix' | 'users'>('matrix');
+  const [isDeleteAllTeachersModalOpen, setIsDeleteAllTeachersModalOpen] = useState(false);
+  const [clearClassTeachersOption, setClearClassTeachersOption] = useState(true);
+  const [confirmTeacherSafetyCheck, setConfirmTeacherSafetyCheck] = useState(false);
+
+  // Total guru count
+  const teacherCount = allUsers.filter((u) => u.role === 'guru').length;
 
   // Form State for Adding / Editing User
   const [userFormData, setUserFormData] = useState({
@@ -495,14 +502,36 @@ export const RolePermissionsManager: React.FC = () => {
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={handleOpenAddUser}
-              className="px-3.5 py-2 bg-sky-700 hover:bg-sky-800 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Tambah Akun Baru</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                id="delete-all-teachers-btn"
+                onClick={() => {
+                  setConfirmTeacherSafetyCheck(false);
+                  setIsDeleteAllTeachersModalOpen(true);
+                }}
+                disabled={teacherCount === 0}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  teacherCount === 0
+                    ? 'bg-stone-100 dark:bg-stone-800 text-stone-400 border border-stone-200 dark:border-stone-700 cursor-not-allowed opacity-60'
+                    : 'bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800 active:scale-95'
+                }`}
+                title="Hapus semua akun guru dari database"
+              >
+                <Trash2 className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+                <span>Hapus Semua Guru ({teacherCount})</span>
+              </button>
+
+              <button
+                type="button"
+                id="add-user-btn"
+                onClick={handleOpenAddUser}
+                className="px-3.5 py-2 bg-sky-700 hover:bg-sky-800 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Tambah Akun Baru</span>
+              </button>
+            </div>
           </div>
 
           <div className="overflow-x-auto rounded-2xl border border-sky-300 dark:border-sky-800 bg-white dark:bg-[#0a1b35]">
@@ -758,6 +787,99 @@ export const RolePermissionsManager: React.FC = () => {
               </button>
             </div>
           </form>
+        </Modal>
+      )}
+
+      {/* Delete All Teachers Confirmation Modal */}
+      {isDeleteAllTeachersModalOpen && (
+        <Modal
+          isOpen={isDeleteAllTeachersModalOpen}
+          onClose={() => {
+            setIsDeleteAllTeachersModalOpen(false);
+            setConfirmTeacherSafetyCheck(false);
+          }}
+          title="Hapus Semua Data Akun Guru"
+          maxWidth="md"
+        >
+          <div className="space-y-5">
+            <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 flex items-start gap-3">
+              <div className="p-2 rounded-xl bg-rose-100 dark:bg-rose-900 text-rose-700 dark:text-rose-300 shrink-0">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div className="text-xs space-y-1">
+                <h4 className="font-extrabold text-rose-900 dark:text-rose-200 text-sm">
+                  Peringatan Penghapusan Akun Guru!
+                </h4>
+                <p className="text-rose-700 dark:text-rose-300 leading-relaxed">
+                  Tindakan ini akan menghapus seluruh data akun guru/wali kelas ({teacherCount} akun) dari sistem database. Akun administrator utama akan tetap dipertahankan agar Anda tidak terkunci dari sistem.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <label className="flex items-start gap-2.5 p-3 rounded-xl bg-sky-50/50 dark:bg-slate-800/80 border border-sky-200 dark:border-slate-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={clearClassTeachersOption}
+                  onChange={(e) => setClearClassTeachersOption(e.target.checked)}
+                  className="mt-0.5 rounded text-sky-600 focus:ring-sky-500"
+                />
+                <div className="text-xs">
+                  <span className="font-bold text-slate-800 dark:text-slate-200 block">
+                    Kosongkan juga penetapan Guru/Wali Kelas di seluruh Rombel
+                  </span>
+                  <span className="text-slate-500 dark:text-slate-400">
+                    Otomatis mereset nama dan NIP wali kelas di data rombongan belajar menjadi kosong/strip (-).
+                  </span>
+                </div>
+              </label>
+
+              <label className="flex items-start gap-2.5 p-3 rounded-xl bg-rose-50/40 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/60 cursor-pointer">
+                <input
+                  id="confirm-delete-all-teachers-checkbox"
+                  type="checkbox"
+                  checked={confirmTeacherSafetyCheck}
+                  onChange={(e) => setConfirmTeacherSafetyCheck(e.target.checked)}
+                  className="mt-0.5 rounded text-rose-600 focus:ring-rose-500"
+                />
+                <span className="text-xs font-bold text-rose-900 dark:text-rose-200 select-none">
+                  Saya menyetujui penghapusan seluruh data akun guru ({teacherCount} guru) secara permanen.
+                </span>
+              </label>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsDeleteAllTeachersModalOpen(false);
+                  setConfirmTeacherSafetyCheck(false);
+                }}
+                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                id="execute-delete-all-teachers-btn"
+                type="button"
+                disabled={!confirmTeacherSafetyCheck}
+                onClick={() => {
+                  if (!confirmTeacherSafetyCheck) return;
+                  deleteAllTeachers({ clearClassTeachers: clearClassTeachersOption });
+                  setIsDeleteAllTeachersModalOpen(false);
+                  setConfirmTeacherSafetyCheck(false);
+                }}
+                className={`px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-2 shadow-xs cursor-pointer ${
+                  confirmTeacherSafetyCheck
+                    ? 'bg-rose-600 hover:bg-rose-700 text-white active:scale-95'
+                    : 'bg-rose-200 dark:bg-rose-950 text-rose-400 dark:text-rose-600 cursor-not-allowed'
+                }`}
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Hapus Semua ({teacherCount} Guru)</span>
+              </button>
+            </div>
+          </div>
         </Modal>
       )}
     </div>

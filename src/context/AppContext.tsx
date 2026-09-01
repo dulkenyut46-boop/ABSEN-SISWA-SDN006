@@ -56,6 +56,7 @@ interface AppContextType {
   addUser: (userData: Omit<UserSession, 'id'>) => UserSession;
   updateUser: (id: string, updatedData: Partial<UserSession>) => void;
   deleteUser: (id: string) => boolean;
+  deleteAllTeachers: (options?: { clearClassTeachers?: boolean }) => { deletedCount: number };
   toggleUserStatus: (id: string) => void;
 
   // Role Permissions Matrix (Hak Akses)
@@ -75,6 +76,7 @@ interface AppContextType {
   addStudent: (studentData: Omit<Student, 'id' | 'createdAt'>) => Student;
   updateStudent: (id: string, updatedData: Partial<Student>) => void;
   deleteStudent: (id: string) => void;
+  deleteAllStudents: (filterClassId?: string) => { deletedCount: number };
   getStudentById: (id: string) => Student | undefined;
   batchImportStudents: (
     importedList: Array<{
@@ -97,6 +99,8 @@ interface AppContextType {
   addClass: (classData: Omit<ClassRoom, 'id'>) => ClassRoom;
   updateClass: (id: string, updatedData: Partial<ClassRoom>) => void;
   deleteClass: (id: string) => void;
+  deleteAllClasses: () => { deletedCount: number };
+  clearAllClassTeachers: () => void;
   getClassById: (id: string) => ClassRoom | undefined;
   batchImportClasses: (
     importedList: Array<{
@@ -398,6 +402,44 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       message: 'Akun pengguna telah dihapus dari sistem.',
     });
     return true;
+  };
+
+  const deleteAllTeachers = (options?: { clearClassTeachers?: boolean }): { deletedCount: number } => {
+    // Filter out users with role 'guru'
+    // If current logged-in user is a guru, preserve current user or switch to admin to prevent locked out state
+    const teachersToDelete = allUsers.filter((u) => u.role === 'guru');
+    const deletedCount = teachersToDelete.length;
+
+    if (deletedCount === 0) {
+      addToast({
+        type: 'info',
+        title: 'Data Guru Kosong',
+        message: 'Tidak ada data akun guru untuk dihapus.',
+      });
+      return { deletedCount: 0 };
+    }
+
+    setAllUsers((prev) => {
+      return prev.filter((u) => u.role !== 'guru' || u.id === currentUser.id);
+    });
+
+    if (options?.clearClassTeachers) {
+      setClasses((prev) =>
+        prev.map((c) => ({
+          ...c,
+          teacherName: '-',
+          teacherNip: '-',
+        }))
+      );
+    }
+
+    addToast({
+      type: 'warning',
+      title: 'Semua Data Guru Dihapus',
+      message: `Berhasil menghapus ${deletedCount} data akun guru dari sistem.`,
+    });
+
+    return { deletedCount };
   };
 
   const toggleUserStatus = (id: string) => {
@@ -901,6 +943,54 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
+  const deleteAllStudents = (filterClassId?: string): { deletedCount: number } => {
+    let deletedCount = 0;
+    if (filterClassId && filterClassId !== 'all') {
+      const remainingStudents = students.filter((s) => s.classId !== filterClassId);
+      const deletedStudents = students.filter((s) => s.classId === filterClassId);
+      deletedCount = deletedStudents.length;
+
+      if (deletedCount === 0) {
+        addToast({
+          type: 'info',
+          title: 'Tidak Ada Siswa',
+          message: 'Tidak ada data siswa yang ditemukan pada kelas yang dipilih.',
+        });
+        return { deletedCount: 0 };
+      }
+
+      const deletedIds = new Set(deletedStudents.map((s) => s.id));
+      setStudents(remainingStudents);
+      setAttendanceRecords((prev) => prev.filter((a) => !deletedIds.has(a.studentId)));
+
+      const targetClassName = classes.find((c) => c.id === filterClassId)?.name || 'Kelas Terpilih';
+      addToast({
+        type: 'warning',
+        title: 'Data Siswa Dihapus',
+        message: `Berhasil menghapus ${deletedCount} data siswa dari ${targetClassName}.`,
+      });
+    } else {
+      deletedCount = students.length;
+      if (deletedCount === 0) {
+        addToast({
+          type: 'info',
+          title: 'Data Siswa Kosong',
+          message: 'Tidak ada data siswa untuk dihapus.',
+        });
+        return { deletedCount: 0 };
+      }
+
+      setStudents([]);
+      setAttendanceRecords([]);
+      addToast({
+        type: 'warning',
+        title: 'Semua Data Siswa Dihapus',
+        message: `Berhasil mengosongkan seluruh data siswa (${deletedCount} siswa) dan rekam presensi terkait.`,
+      });
+    }
+    return { deletedCount };
+  };
+
   const getStudentById = (id: string) => {
     return students.find((s) => s.id === id);
   };
@@ -944,6 +1034,40 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       type: 'warning',
       title: 'Kelas Dihapus',
       message: target ? `${target.name} telah dihapus.` : 'Kelas telah dihapus.',
+    });
+  };
+
+  const deleteAllClasses = (): { deletedCount: number } => {
+    const deletedCount = classes.length;
+    if (deletedCount === 0) {
+      addToast({
+        type: 'info',
+        title: 'Data Kelas Kosong',
+        message: 'Tidak ada data kelas untuk dihapus.',
+      });
+      return { deletedCount: 0 };
+    }
+    setClasses([]);
+    addToast({
+      type: 'warning',
+      title: 'Semua Kelas Dihapus',
+      message: `Berhasil menghapus seluruh data rombel kelas (${deletedCount} kelas).`,
+    });
+    return { deletedCount };
+  };
+
+  const clearAllClassTeachers = () => {
+    setClasses((prev) =>
+      prev.map((c) => ({
+        ...c,
+        teacherName: '-',
+        teacherNip: '-',
+      }))
+    );
+    addToast({
+      type: 'warning',
+      title: 'Data Wali Kelas Dikosongkan',
+      message: 'Semua nama dan NIP wali kelas pada seluruh rombel telah dikosongkan.',
     });
   };
 
@@ -1794,6 +1918,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addUser,
         updateUser,
         deleteUser,
+        deleteAllTeachers,
         toggleUserStatus,
         rolePermissions,
         updateRolePermissions,
@@ -1807,12 +1932,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addStudent,
         updateStudent,
         deleteStudent,
+        deleteAllStudents,
         getStudentById,
         batchImportStudents,
         classes,
         addClass,
         updateClass,
         deleteClass,
+        deleteAllClasses,
+        clearAllClassTeachers,
         getClassById,
         batchImportClasses,
         attendanceRecords,
