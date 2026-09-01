@@ -8,7 +8,6 @@ import {
   GraduationCap,
   FileSpreadsheet,
   MailCheck,
-  QrCode,
   Settings,
   ChevronRight,
   BookOpen,
@@ -97,11 +96,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: <MailCheck className="w-5 h-5" />,
       badge: pendingLeavesCount > 0 ? pendingLeavesCount : undefined,
       badgeColor: 'bg-amber-500 text-white font-bold animate-pulse',
-    },
-    {
-      id: 'kartu-pelajar',
-      label: 'Kartu QR Siswa',
-      icon: <QrCode className="w-5 h-5" />,
     },
     {
       id: 'backup-restore',

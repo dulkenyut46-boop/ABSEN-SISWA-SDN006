@@ -1,12 +1,12 @@
 import React, { useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { StatusBadge } from '../common/Badge';
+import { MonthlyAttendanceChart } from './MonthlyAttendanceChart';
 import {
   Users,
   CheckCircle2,
   AlertTriangle,
   Clock,
-  QrCode,
   TrendingUp,
   FileSpreadsheet,
   ArrowUpRight,
@@ -555,6 +555,9 @@ export const DashboardView: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Monthly Attendance Recap Chart (H, T, S, I, A, LN) */}
+      <MonthlyAttendanceChart />
 
       {/* Lower Section: 7-Day Trend & Students Needing Attention */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

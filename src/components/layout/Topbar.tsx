@@ -4,7 +4,6 @@ import {
   Menu,
   Sun,
   Moon,
-  QrCode,
   Bell,
   Calendar as CalendarIcon,
   ChevronDown,
@@ -23,13 +22,11 @@ import {
 
 interface TopbarProps {
   onToggleMobileSidebar: () => void;
-  onOpenQRScanner: () => void;
   onOpenUserSwitcher: () => void;
 }
 
 export const Topbar: React.FC<TopbarProps> = ({
   onToggleMobileSidebar,
-  onOpenQRScanner,
   onOpenUserSwitcher,
 }) => {
   const {
@@ -93,11 +90,6 @@ export const Topbar: React.FC<TopbarProps> = ({
         return {
           title: 'Surat Izin & Sakit Online',
           subtitle: 'Verifikasi pengajuan izin dan surat keterangan dari wali murid',
-        };
-      case 'kartu-pelajar':
-        return {
-          title: 'Kartu Pelajar & QR Presensi',
-          subtitle: 'Cetak kartu identitas siswa dengan barcode presensi digital',
         };
       case 'pengaturan':
         return {
@@ -186,17 +178,6 @@ export const Topbar: React.FC<TopbarProps> = ({
           <CalendarIcon className="w-3.5 h-3.5 text-sky-700 dark:text-sky-400" />
           <span>{todayFormatted}</span>
         </div>
-
-        {/* Quick QR Scanner Button */}
-        <button
-          id="topbar-quick-qr-button"
-          onClick={onOpenQRScanner}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-sky-700 hover:bg-sky-800 text-white text-xs font-bold shadow-xs shadow-sky-300/50 transition-all active:scale-95"
-          title="Pindai Kartu Siswa (QR/Barcode)"
-        >
-          <QrCode className="w-4 h-4" />
-          <span className="hidden md:inline">Pindai QR</span>
-        </button>
 
         {/* Notifications Popover */}
         <div className="relative">

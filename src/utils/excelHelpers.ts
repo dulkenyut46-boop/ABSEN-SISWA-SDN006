@@ -535,6 +535,56 @@ export function exportAttendanceMatrixToExcel(
     return rowObj;
   });
 
+  // Append Total Summary Row for H, T, S, I, A, LN
+  let totalH = 0;
+  let totalT = 0;
+  let totalS = 0;
+  let totalI = 0;
+  let totalA = 0;
+  let totalLN = 0;
+  studentMatrix.forEach((m) => {
+    totalH += m.hCount || 0;
+    totalT += m.tCount || 0;
+    totalS += m.sCount || 0;
+    totalI += m.iCount || 0;
+    totalA += m.aCount || 0;
+    totalLN += m.lnCount || 0;
+  });
+
+  const totalSummaryRow: Record<string, any> = {
+    'No': 'TOTAL',
+    'NISN': '',
+    'NIS': '',
+    'Nama Siswa': 'TOTAL REKAPITULASI KESELURUHAN',
+    'L/P': '',
+    'Kelas': '',
+  };
+
+  reportDates.forEach((d, dIdx) => {
+    const colHeader = headers[6 + dIdx];
+    let dailyPresent = 0;
+    studentMatrix.forEach((m) => {
+      const ds = m.dateStatuses[dIdx];
+      if (ds?.status === 'H' || ds?.status === 'T') {
+        dailyPresent++;
+      }
+    });
+    totalSummaryRow[colHeader] = dailyPresent;
+  });
+
+  totalSummaryRow['Hadir (H)'] = totalH;
+  totalSummaryRow['Terlambat (T)'] = totalT;
+  totalSummaryRow['Sakit (S)'] = totalS;
+  totalSummaryRow['Izin (I)'] = totalI;
+  totalSummaryRow['Alpa (A)'] = totalA;
+  totalSummaryRow['Libur Nas (LN)'] = totalLN;
+  const avgRate = studentMatrix.length > 0 
+    ? Math.round(studentMatrix.reduce((acc, m) => acc + (m.rate || 0), 0) / studentMatrix.length) 
+    : 0;
+  totalSummaryRow['% Kehadiran'] = `${avgRate}%`;
+
+  rows.push(totalSummaryRow);
+
   const ws = XLSX.utils.json_to_sheet(rows);
 
   // Set column widths

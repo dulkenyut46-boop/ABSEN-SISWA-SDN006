@@ -17,7 +17,6 @@ import {
   CheckCircle2,
   AlertTriangle,
   FileSpreadsheet,
-  QrCode,
   SlidersHorizontal,
   Eye,
   EyeOff,
@@ -69,11 +68,10 @@ export const RolePermissionsManager: React.FC = () => {
 
   const availableNavigationTabs: { id: NavigationTab; label: string; desc: string }[] = [
     { id: 'dashboard', label: 'Dasbor Utama', desc: 'Ringkasan statistik kehadiran sekolah & grafik' },
-    { id: 'presensi-harian', label: 'Presensi Harian', desc: 'Pengisian absensi kelas, checklist & QR Scanner' },
+    { id: 'presensi-harian', label: 'Presensi Harian', desc: 'Pengisian absensi kelas dan checklist kehadiran' },
     { id: 'data-siswa', label: 'Master Data Siswa', desc: 'Database biodata peserta didik & NISN' },
     { id: 'data-kelas', label: 'Rombel & Wali Kelas', desc: 'Struktur kelas, ruangan & penetapan guru' },
     { id: 'rekap-laporan', label: 'Rekap & Laporan Presensi', desc: 'Laporan bulanan/semester format Kemdikbud' },
-    { id: 'kartu-pelajar', label: 'Cetak Kartu Siswa (QR)', desc: 'Generator kartu identitas barcode presensi' },
     { id: 'pengajuan-izin', label: 'Surat Izin & Sakit', desc: 'Verifikasi & persetujuan surat izin digital' },
     { id: 'import-data', label: 'Import / Export Data', desc: 'Sinkronisasi Excel Dapodik & format data' },
     { id: 'backup-restore', label: 'Simpan & Pulihkan Database', desc: 'Backup berkas JSON lengkap, restore data, dan snapshot sistem' },
@@ -120,12 +118,6 @@ export const RolePermissionsManager: React.FC = () => {
       key: 'canManageClasses',
       title: 'Kelola Rombongan Belajar (Kelas)',
       description: 'Menambah rombel baru, mengganti wali kelas, dan nomor ruangan.',
-      category: 'Master Data',
-    },
-    {
-      key: 'canGenerateCards',
-      title: 'Generate & Cetak Kartu Pelajar (QR)',
-      description: 'Mencetak kartu presensi barcode untuk siswa di sekolah.',
       category: 'Master Data',
     },
     {

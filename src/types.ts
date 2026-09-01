@@ -134,7 +134,7 @@ export interface RolePermissionConfig {
   canImportExportData: boolean;
   canViewReports: boolean;
   canApproveLeave: boolean;
-  canGenerateCards: boolean;
+  canGenerateCards?: boolean;
   canManageSettings: boolean;
   canManagePermissions: boolean;
   restrictedToAssignedClass: boolean; // Jika true, guru hanya dapat mengelola kelas binaannya
@@ -185,7 +185,6 @@ export type NavigationTab =
   | 'import-data'
   | 'rekap-laporan'
   | 'pengajuan-izin'
-  | 'kartu-pelajar'
   | 'backup-restore'
   | 'pengaturan';
 

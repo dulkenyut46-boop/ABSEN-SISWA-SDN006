@@ -156,10 +156,8 @@ export const ReportsView: React.FC = () => {
         let status = rec ? rec.status : hol ? 'LN' : isSun ? 'L' : 'H';
 
         if (status === 'H') hCount++;
-        else if (status === 'T') {
-          tCount++;
-          hCount++;
-        } else if (status === 'S') sCount++;
+        else if (status === 'T') tCount++;
+        else if (status === 'S') sCount++;
         else if (status === 'I') iCount++;
         else if (status === 'A') aCount++;
         else if (status === 'LN') lnCount++;
@@ -174,9 +172,9 @@ export const ReportsView: React.FC = () => {
         };
       });
 
-      // Calculate attendance rate based on effective school days
+      // Calculate attendance rate based on effective school days (Hadir + Terlambat)
       const baseDays = effectiveSchoolDaysCount > 0 ? effectiveSchoolDaysCount : reportDates.length;
-      const rate = baseDays > 0 ? Math.min(100, Math.round((hCount / baseDays) * 100)) : 100;
+      const rate = baseDays > 0 ? Math.min(100, Math.round(((hCount + tCount) / baseDays) * 100)) : 100;
 
       return {
         student,
@@ -196,6 +194,7 @@ export const ReportsView: React.FC = () => {
   // Overall Class summary metrics
   const classOverallStats = useMemo(() => {
     let totalH = 0;
+    let totalT = 0;
     let totalS = 0;
     let totalI = 0;
     let totalA = 0;
@@ -203,6 +202,7 @@ export const ReportsView: React.FC = () => {
 
     studentMatrix.forEach((m) => {
       totalH += m.hCount;
+      totalT += m.tCount;
       totalS += m.sCount;
       totalI += m.iCount;
       totalA += m.aCount;
@@ -211,9 +211,11 @@ export const ReportsView: React.FC = () => {
 
     const baseDays = effectiveSchoolDaysCount > 0 ? effectiveSchoolDaysCount : reportDates.length;
     const totalSlots = studentMatrix.length * baseDays;
-    const avgRate = totalSlots > 0 ? Math.round((totalH / totalSlots) * 100) : 0;
+    const totalPresent = totalH + totalT;
+    const grandTotal = totalH + totalT + totalS + totalI + totalA + totalLN;
+    const avgRate = totalSlots > 0 ? Math.min(100, Math.round((totalPresent / totalSlots) * 100)) : 0;
 
-    return { totalH, totalS, totalI, totalA, totalLN, avgRate };
+    return { totalH, totalT, totalS, totalI, totalA, totalLN, totalPresent, grandTotal, avgRate };
   }, [studentMatrix, reportDates, effectiveSchoolDaysCount]);
 
   // Daily totals per column for footer
@@ -684,6 +686,51 @@ export const ReportsView: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* Total Presensi Aggregate Summary Grid (H, T, S, I, A, LN) */}
+        <div className="pt-2 border-t border-sky-100 dark:border-sky-900/60">
+          <div className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-2 flex items-center justify-between">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-sky-600"></span>
+              Akumulasi Total Presensi Periode Ini:
+            </span>
+            <span className="text-[10px] text-slate-500 font-normal">
+              Total {classOverallStats.grandTotal} catatan presensi
+            </span>
+          </div>
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+            <div className="p-2 rounded-xl bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-center">
+              <div className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 uppercase">Hadir (H)</div>
+              <div className="text-lg font-black text-emerald-700 dark:text-emerald-400 mt-0.5">{classOverallStats.totalH}</div>
+              <div className="text-[9px] text-emerald-600/80 dark:text-emerald-400/80">Tepat Waktu</div>
+            </div>
+            <div className="p-2 rounded-xl bg-purple-50/90 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/60 text-center">
+              <div className="text-[10px] font-bold text-purple-800 dark:text-purple-300 uppercase">Terlambat (T)</div>
+              <div className="text-lg font-black text-purple-700 dark:text-purple-400 mt-0.5">{classOverallStats.totalT}</div>
+              <div className="text-[9px] text-purple-600/80 dark:text-purple-400/80">Masuk &gt; 07:15</div>
+            </div>
+            <div className="p-2 rounded-xl bg-amber-50/90 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-center">
+              <div className="text-[10px] font-bold text-amber-800 dark:text-amber-300 uppercase">Sakit (S)</div>
+              <div className="text-lg font-black text-amber-700 dark:text-amber-400 mt-0.5">{classOverallStats.totalS}</div>
+              <div className="text-[9px] text-amber-600/80 dark:text-amber-400/80">Surat Dokter</div>
+            </div>
+            <div className="p-2 rounded-xl bg-sky-50/90 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800/60 text-center">
+              <div className="text-[10px] font-bold text-sky-800 dark:text-sky-300 uppercase">Izin (I)</div>
+              <div className="text-lg font-black text-sky-700 dark:text-sky-400 mt-0.5">{classOverallStats.totalI}</div>
+              <div className="text-[9px] text-sky-600/80 dark:text-sky-400/80">Surat Izin Ortu</div>
+            </div>
+            <div className="p-2 rounded-xl bg-rose-50/90 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 text-center">
+              <div className="text-[10px] font-bold text-rose-800 dark:text-rose-300 uppercase">Alpa (A)</div>
+              <div className="text-lg font-black text-rose-700 dark:text-rose-400 mt-0.5">{classOverallStats.totalA}</div>
+              <div className="text-[9px] text-rose-600/80 dark:text-rose-400/80">Tanpa Berita</div>
+            </div>
+            <div className="p-2 rounded-xl bg-indigo-50/90 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/60 text-center">
+              <div className="text-[10px] font-bold text-indigo-800 dark:text-indigo-300 uppercase">Libur (LN)</div>
+              <div className="text-lg font-black text-indigo-700 dark:text-indigo-400 mt-0.5">{classOverallStats.totalLN}</div>
+              <div className="text-[9px] text-indigo-600/80 dark:text-indigo-400/80">Libur Nasional</div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Main Document Body (Supports continuous or multi-page layout) */}
@@ -962,12 +1009,13 @@ export const ReportsView: React.FC = () => {
                     ))}
                   </tbody>
 
-                  {/* Table Footer: Daily Attendance Totals (Only on Last Page or Single Page) */}
+                  {/* Table Footer: Daily & Total Presensi Summary (Only on Last Page or Single Page) */}
                   {printSettings.showDailySummaryFooter && isLastPage && (
                     <tfoot>
-                      <tr className="bg-sky-100/70 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold border-t-2 border-slate-300 dark:border-slate-700 text-[10px]">
-                        <td colSpan={3} className="py-1.5 px-2 border-r border-slate-300 dark:border-slate-700 text-right font-black uppercase">
-                          Jumlah Hadir:
+                      {/* Row 1: Daily Counts per date column + column sums */}
+                      <tr className="bg-sky-100/80 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold border-t-2 border-slate-400 dark:border-slate-600 text-[10px]">
+                        <td colSpan={3} className="py-1.5 px-2 border-r border-slate-300 dark:border-slate-700 text-right font-black uppercase tracking-tight">
+                          Jml Hadir Harian:
                         </td>
                         {dailyColumnStats.map((stat, i) => {
                           if (stat.isSunday && printSettings.showSundays) {
@@ -1001,8 +1049,58 @@ export const ReportsView: React.FC = () => {
                             </td>
                           );
                         })}
-                        <td colSpan={7} className="py-1.5 px-2 text-center font-black bg-sky-200/80 dark:bg-slate-700">
-                          Rata-rata: {classOverallStats.avgRate}%
+                        {/* Status Column Sums */}
+                        <td className="py-1 px-0.5 border-r border-slate-300 dark:border-slate-700 text-center font-mono font-black text-emerald-800 dark:text-emerald-300 bg-emerald-100/70 dark:bg-emerald-950/50" title="Total Hadir (H)">
+                          {classOverallStats.totalH}
+                        </td>
+                        <td className="py-1 px-0.5 border-r border-slate-300 dark:border-slate-700 text-center font-mono font-black text-purple-800 dark:text-purple-300 bg-purple-100/70 dark:bg-purple-950/50" title="Total Terlambat (T)">
+                          {classOverallStats.totalT}
+                        </td>
+                        <td className="py-1 px-0.5 border-r border-slate-300 dark:border-slate-700 text-center font-mono font-black text-amber-800 dark:text-amber-300 bg-amber-100/70 dark:bg-amber-950/50" title="Total Sakit (S)">
+                          {classOverallStats.totalS}
+                        </td>
+                        <td className="py-1 px-0.5 border-r border-slate-300 dark:border-slate-700 text-center font-mono font-black text-sky-800 dark:text-sky-300 bg-sky-100/70 dark:bg-sky-950/50" title="Total Izin (I)">
+                          {classOverallStats.totalI}
+                        </td>
+                        <td className="py-1 px-0.5 border-r border-slate-300 dark:border-slate-700 text-center font-mono font-black text-rose-800 dark:text-rose-300 bg-rose-100/70 dark:bg-rose-950/50" title="Total Alpa (A)">
+                          {classOverallStats.totalA}
+                        </td>
+                        <td className="py-1 px-0.5 border-r border-slate-300 dark:border-slate-700 text-center font-mono font-black text-indigo-800 dark:text-indigo-300 bg-indigo-100/70 dark:bg-indigo-950/50" title="Total Libur Nasional (LN)">
+                          {classOverallStats.totalLN}
+                        </td>
+                        <td className="py-1 px-0.5 text-center font-mono font-black bg-sky-200 dark:bg-slate-700 text-slate-950 dark:text-white" title="Rata-rata Persentase Kehadiran">
+                          {classOverallStats.avgRate}%
+                        </td>
+                      </tr>
+
+                      {/* Row 2: Total Rekapitulasi Label and Grand Totals */}
+                      <tr className="bg-sky-200/90 dark:bg-slate-800/90 text-slate-900 dark:text-slate-100 font-extrabold border-t border-slate-300 dark:border-slate-700 text-[10.5px]">
+                        <td colSpan={3} className="py-1.5 px-2 border-r border-slate-300 dark:border-slate-700 text-right font-black uppercase text-sky-950 dark:text-sky-200">
+                          TOTAL REKAP (H,T,S,I,A,LN):
+                        </td>
+                        <td colSpan={reportDates.length} className="py-1.5 px-2 border-r border-slate-300 dark:border-slate-700 text-left font-bold text-[9.5px] text-slate-700 dark:text-slate-300">
+                          Hadir: {classOverallStats.totalPresent} ({classOverallStats.avgRate}%) • Sakit/Izin: {classOverallStats.totalS + classOverallStats.totalI} • Alpa: {classOverallStats.totalA} • Libur: {classOverallStats.totalLN}
+                        </td>
+                        <td className="py-1 px-0.5 border-r border-slate-300 dark:border-slate-700 text-center font-black text-emerald-900 dark:text-emerald-200 bg-emerald-200/80 dark:bg-emerald-900/60">
+                          {classOverallStats.totalH}
+                        </td>
+                        <td className="py-1 px-0.5 border-r border-slate-300 dark:border-slate-700 text-center font-black text-purple-900 dark:text-purple-200 bg-purple-200/80 dark:bg-purple-900/60">
+                          {classOverallStats.totalT}
+                        </td>
+                        <td className="py-1 px-0.5 border-r border-slate-300 dark:border-slate-700 text-center font-black text-amber-900 dark:text-amber-200 bg-amber-200/80 dark:bg-amber-900/60">
+                          {classOverallStats.totalS}
+                        </td>
+                        <td className="py-1 px-0.5 border-r border-slate-300 dark:border-slate-700 text-center font-black text-sky-900 dark:text-sky-200 bg-sky-200/80 dark:bg-sky-900/60">
+                          {classOverallStats.totalI}
+                        </td>
+                        <td className="py-1 px-0.5 border-r border-slate-300 dark:border-slate-700 text-center font-black text-rose-900 dark:text-rose-200 bg-rose-200/80 dark:bg-rose-900/60">
+                          {classOverallStats.totalA}
+                        </td>
+                        <td className="py-1 px-0.5 border-r border-slate-300 dark:border-slate-700 text-center font-black text-indigo-900 dark:text-indigo-200 bg-indigo-200/80 dark:bg-indigo-900/60">
+                          {classOverallStats.totalLN}
+                        </td>
+                        <td className="py-1 px-0.5 text-center font-black bg-sky-300 dark:bg-sky-900 text-sky-950 dark:text-white">
+                          {classOverallStats.avgRate}%
                         </td>
                       </tr>
                     </tfoot>

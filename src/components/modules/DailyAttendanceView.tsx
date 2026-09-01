@@ -9,7 +9,6 @@ import {
   Search,
   Sparkles,
   Save,
-  QrCode,
   FileText,
   Clock,
   CheckCheck,
@@ -24,12 +23,10 @@ import { NationalHolidaysManager } from './NationalHolidaysManager';
 import confetti from 'canvas-confetti';
 
 interface DailyAttendanceViewProps {
-  onOpenQRScanner: () => void;
+  onOpenQRScanner?: () => void;
 }
 
-export const DailyAttendanceView: React.FC<DailyAttendanceViewProps> = ({
-  onOpenQRScanner,
-}) => {
+export const DailyAttendanceView: React.FC<DailyAttendanceViewProps> = () => {
   const {
     students,
     classes,
@@ -347,15 +344,6 @@ export const DailyAttendanceView: React.FC<DailyAttendanceViewProps> = ({
             >
               <CalendarCheck className="w-4 h-4" />
               <span>Libur Nasional</span>
-            </button>
-
-            <button
-              id="attendance-qr-scanner-button"
-              onClick={onOpenQRScanner}
-              className="flex-1 sm:flex-none px-3.5 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
-            >
-              <QrCode className="w-4 h-4" />
-              <span>Pindai QR</span>
             </button>
 
             <button

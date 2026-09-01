@@ -3,7 +3,6 @@ import { AppProvider, useApp } from './context/AppContext';
 import { Sidebar } from './components/layout/Sidebar';
 import { Topbar } from './components/layout/Topbar';
 import { ToastContainer } from './components/common/ToastContainer';
-import { QRScannerModal } from './components/common/QRScannerModal';
 import { UserSwitcherModal } from './components/common/UserSwitcherModal';
 import { LoginDashboard } from './components/auth/LoginDashboard';
 import { SplashScreen } from './components/common/SplashScreen';
@@ -26,7 +25,6 @@ import { ClassMasterView } from './components/modules/ClassMasterView';
 import { ReportsView } from './components/modules/ReportsView';
 import { ImportDataView } from './components/modules/ImportDataView';
 import { LeaveRequestsView } from './components/modules/LeaveRequestsView';
-import { StudentCardGeneratorView } from './components/modules/StudentCardGeneratorView';
 import { BackupRestoreView } from './components/modules/BackupRestoreView';
 import { SettingsView } from './components/modules/SettingsView';
 
@@ -50,7 +48,6 @@ const MainLayout: React.FC = () => {
   } = useApp();
 
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
   const [isUserSwitcherOpen, setIsUserSwitcherOpen] = useState(false);
   const [isSidebarDragging, setIsSidebarDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -120,7 +117,7 @@ const MainLayout: React.FC = () => {
       case 'dashboard':
         return <DashboardView />;
       case 'presensi-harian':
-        return <DailyAttendanceView onOpenQRScanner={() => setIsQRScannerOpen(true)} />;
+        return <DailyAttendanceView />;
       case 'data-siswa':
         return <StudentsMasterView />;
       case 'data-kelas':
@@ -131,8 +128,6 @@ const MainLayout: React.FC = () => {
         return <ReportsView />;
       case 'pengajuan-izin':
         return <LeaveRequestsView />;
-      case 'kartu-pelajar':
-        return <StudentCardGeneratorView />;
       case 'backup-restore':
         return <BackupRestoreView />;
       case 'pengaturan':
@@ -161,7 +156,6 @@ const MainLayout: React.FC = () => {
       {/* Primary Top Bar Header */}
       <Topbar
         onToggleMobileSidebar={() => setIsMobileSidebarOpen((prev) => !prev)}
-        onOpenQRScanner={() => setIsQRScannerOpen(true)}
         onOpenUserSwitcher={() => setIsUserSwitcherOpen(true)}
       />
 
@@ -262,11 +256,6 @@ const MainLayout: React.FC = () => {
       </div>
 
       {/* Global Modals */}
-      <QRScannerModal
-        isOpen={isQRScannerOpen}
-        onClose={() => setIsQRScannerOpen(false)}
-      />
-
       <UserSwitcherModal
         isOpen={isUserSwitcherOpen}
         onClose={() => setIsUserSwitcherOpen(false)}

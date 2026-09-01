@@ -1,4 +1,4 @@
-import { Student, ClassRoom, AttendanceRecord, LeaveRequest, SchoolProfile, UserSession, RolePermissionsMatrix, NationalHoliday } from '../types';
+import { Student, ClassRoom, AttendanceRecord, LeaveRequest, SchoolProfile, UserSession, RolePermissionsMatrix, NationalHoliday, AttendanceStatus } from '../types';
 import { TUT_WURI_HANDAYANI_LOGO, LOGO_SD_MERAH_PUTIH } from '../utils/logoPresets';
 
 export const initialSchoolProfile: SchoolProfile = {
@@ -429,48 +429,82 @@ export const getTodayDateString = (): string => {
   return d.toISOString().split('T')[0];
 };
 
-// Generate realistic dummy attendance data for last 7 days + today
+// Generate realistic dummy attendance data spanning across months for rich monthly charts & reports
 export const generateInitialAttendance = (): AttendanceRecord[] => {
   const records: AttendanceRecord[] = [];
   const todayStr = getTodayDateString();
-  const dates = [
-    getPastDate(6),
-    getPastDate(5),
-    getPastDate(4),
-    getPastDate(3),
-    getPastDate(2),
-    getPastDate(1),
-    todayStr,
-  ];
+  
+  // Set of sample dates across months in 2026 (Jan - Sep 2026) + recent daily streak
+  const holidayDateSet = new Set(initialNationalHolidays.map((h) => h.date));
+  
+  const dates: string[] = [];
+  
+  // Generate sample school days across each month of 2026 (Jan s/d Sep)
+  for (let m = 1; m <= 9; m++) {
+    const monthStr = m.toString().padStart(2, '0');
+    // Sample weekdays per month (5 to 10 days per month, plus full August)
+    const sampleDays = m === 8 
+      ? [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+      : [2, 5, 8, 12, 15, 17, 20, 22, 25, 28];
+      
+    sampleDays.forEach((day) => {
+      const dayStr = day.toString().padStart(2, '0');
+      const dateStr = `2026-${monthStr}-${dayStr}`;
+      const d = new Date(dateStr + 'T00:00:00');
+      if (d.getDay() !== 0) { // Exclude Sundays
+        if (!dates.includes(dateStr)) {
+          dates.push(dateStr);
+        }
+      }
+    });
+  }
+
+  // Ensure recent 7 days are included
+  for (let i = 6; i >= 0; i--) {
+    const past = getPastDate(i);
+    const d = new Date(past + 'T00:00:00');
+    if (d.getDay() !== 0 && !dates.includes(past)) {
+      dates.push(past);
+    }
+  }
+
+  dates.sort();
 
   initialStudents.forEach((student, sIdx) => {
     dates.forEach((date, dIdx) => {
-      // Deterministic realistic distribution
-      let status: 'H' | 'S' | 'I' | 'A' | 'T' = 'H';
-      let timeIn = '06:50';
+      const isHol = holidayDateSet.has(date);
+      let status: AttendanceStatus = 'H';
+      let timeIn: string | undefined = '06:50';
       let notes = '';
 
-      const seed = (sIdx * 7 + dIdx * 13) % 100;
-      if (seed === 95 || seed === 12) {
-        status = 'S';
-        timeIn = undefined as any;
-        notes = 'Demam dan flu (Istirahat)';
-      } else if (seed === 88 || seed === 34) {
-        status = 'I';
-        timeIn = undefined as any;
-        notes = 'Acara keluarga di luar kota';
-      } else if (seed === 99) {
-        status = 'A';
-        timeIn = undefined as any;
-        notes = 'Tanpa pemberitahuan';
-      } else if (seed === 70 || seed === 25) {
-        status = 'T';
-        timeIn = '07:18';
-        notes = 'Terlambat 8 menit (macet)';
+      if (isHol) {
+        status = 'LN';
+        timeIn = undefined;
+        const holObj = initialNationalHolidays.find((h) => h.date === date);
+        notes = holObj ? holObj.name : 'Libur Nasional';
       } else {
-        // Hadir normal
-        const minutes = 45 + ((sIdx + dIdx) % 15);
-        timeIn = `06:${minutes.toString().padStart(2, '0')}`;
+        const seed = (sIdx * 11 + dIdx * 17 + (student.name.charCodeAt(0) || 0)) % 100;
+        if (seed === 95 || seed === 12) {
+          status = 'S';
+          timeIn = undefined;
+          notes = 'Demam dan flu (Istirahat)';
+        } else if (seed === 88 || seed === 34) {
+          status = 'I';
+          timeIn = undefined;
+          notes = 'Acara keluarga di luar kota';
+        } else if (seed === 99) {
+          status = 'A';
+          timeIn = undefined;
+          notes = 'Tanpa pemberitahuan';
+        } else if (seed === 70 || seed === 25 || seed === 42) {
+          status = 'T';
+          timeIn = '07:18';
+          notes = 'Terlambat masuk sekolah (macet)';
+        } else {
+          // Hadir normal
+          const minutes = 45 + ((sIdx + dIdx) % 15);
+          timeIn = `06:${minutes.toString().padStart(2, '0')}`;
+        }
       }
 
       records.push({
@@ -553,7 +587,6 @@ export const initialRolePermissionsMatrix: RolePermissionsMatrix = {
       'import-data',
       'rekap-laporan',
       'pengajuan-izin',
-      'kartu-pelajar',
       'backup-restore',
       'pengaturan',
     ],
@@ -566,7 +599,7 @@ export const initialRolePermissionsMatrix: RolePermissionsMatrix = {
       canImportExportData: true,
       canViewReports: true,
       canApproveLeave: true,
-      canGenerateCards: true,
+      canGenerateCards: false,
       canManageSettings: true,
       canManagePermissions: true,
       restrictedToAssignedClass: false,
@@ -576,14 +609,13 @@ export const initialRolePermissionsMatrix: RolePermissionsMatrix = {
     role: 'guru',
     label: 'Guru Kelas / Wali Kelas & Pendidik',
     badgeColor: 'bg-sky-700 text-white',
-    description: 'Akses presensi harian, kelola siswa kelas binaan, persetujuan surat izin, rekap laporan kelas, dan cetak kartu siswa.',
+    description: 'Akses presensi harian, kelola siswa kelas binaan, persetujuan surat izin, dan rekap laporan kelas.',
     allowedTabs: [
       'dashboard',
       'presensi-harian',
       'data-siswa',
       'rekap-laporan',
       'pengajuan-izin',
-      'kartu-pelajar',
     ],
     permissions: {
       canViewDashboard: true,
@@ -594,7 +626,7 @@ export const initialRolePermissionsMatrix: RolePermissionsMatrix = {
       canImportExportData: false,
       canViewReports: true,
       canApproveLeave: true,
-      canGenerateCards: true,
+      canGenerateCards: false,
       canManageSettings: false,
       canManagePermissions: false,
       restrictedToAssignedClass: true,
