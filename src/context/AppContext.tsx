@@ -145,6 +145,8 @@ interface AppContextType {
   // Leave Requests (Surat Izin)
   leaveRequests: LeaveRequest[];
   addLeaveRequest: (request: Omit<LeaveRequest, 'id' | 'submittedAt' | 'status'>) => void;
+  updateLeaveRequest: (id: string, updatedData: Partial<LeaveRequest>) => void;
+  deleteLeaveRequest: (id: string) => void;
   approveLeaveRequest: (id: string) => void;
   rejectLeaveRequest: (id: string) => void;
 
@@ -1515,6 +1517,60 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
+  const updateLeaveRequest = (id: string, updatedData: Partial<LeaveRequest>) => {
+    const target = leaveRequests.find((r) => r.id === id);
+    if (!target) return;
+
+    const student = students.find((s) => s.id === (updatedData.studentId || target.studentId));
+
+    setLeaveRequests((prev) =>
+      prev.map((r) => {
+        if (r.id !== id) return r;
+        return {
+          ...r,
+          ...updatedData,
+          studentName: student?.name || updatedData.studentName || r.studentName,
+          className: student?.className || updatedData.className || r.className,
+        };
+      })
+    );
+
+    // If the request is already approved ('Disetujui'), and the date or type changed, synchronize attendance record
+    const finalStatus = updatedData.status || target.status;
+    if (finalStatus === 'Disetujui') {
+      const studentId = updatedData.studentId || target.studentId;
+      const type = updatedData.type || target.type;
+      const startDate = updatedData.startDate || target.startDate;
+      const reason = updatedData.reason || target.reason;
+      const statusType: AttendanceStatus = type === 'Sakit' ? 'S' : 'I';
+      markAttendance(
+        studentId,
+        statusType,
+        startDate,
+        `Izin disetujui (diedit): ${reason}`
+      );
+    }
+
+    addToast({
+      type: 'success',
+      title: 'Surat Izin Diperbarui',
+      message: `Surat permohonan untuk ${student?.name || target.studentName} berhasil disimpan.`,
+    });
+  };
+
+  const deleteLeaveRequest = (id: string) => {
+    const target = leaveRequests.find((r) => r.id === id);
+    if (!target) return;
+
+    setLeaveRequests((prev) => prev.filter((r) => r.id !== id));
+
+    addToast({
+      type: 'warning',
+      title: 'Surat Izin Dihapus',
+      message: `Surat permohonan izin/sakit siswa ${target.studentName} telah dihapus.`,
+    });
+  };
+
   // QR Barcode Scanning logic
   const scanStudentQR = (query: string) => {
     const cleanQuery = query.trim().toLowerCase();
@@ -1963,6 +2019,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         resetHolidaysToDefault,
         leaveRequests,
         addLeaveRequest,
+        updateLeaveRequest,
+        deleteLeaveRequest,
         approveLeaveRequest,
         rejectLeaveRequest,
         notifications,
