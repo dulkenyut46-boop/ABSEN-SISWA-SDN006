@@ -378,33 +378,37 @@ export const DailyAttendanceView: React.FC<DailyAttendanceViewProps> = () => {
                 {summaryStats.hadir}
               </p>
             </div>
-            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+            <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white font-black text-xs flex items-center justify-center shadow-xs">
+              H
+            </div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-purple-50/70 dark:bg-purple-950/30 border border-purple-200/60 dark:border-purple-800/60 flex items-center justify-between">
+            <div>
+              <p className="text-[11px] font-bold text-purple-700 dark:text-purple-300">
+                Terlambat (T)
+              </p>
+              <p className="text-base font-black text-purple-700 dark:text-purple-300">
+                {summaryStats.terlambat}
+              </p>
+            </div>
+            <div className="w-8 h-8 rounded-lg bg-purple-600 text-white font-black text-xs flex items-center justify-center shadow-xs">
+              T
+            </div>
           </div>
 
           <div className="p-3 rounded-xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/60 flex items-center justify-between">
             <div>
               <p className="text-[11px] font-bold text-amber-700 dark:text-amber-300">
-                Terlambat (T)
-              </p>
-              <p className="text-base font-black text-amber-700 dark:text-amber-300">
-                {summaryStats.terlambat}
-              </p>
-            </div>
-            <Clock className="w-4 h-4 text-amber-500" />
-          </div>
-
-          <div className="p-3 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-800/60 flex items-center justify-between">
-            <div>
-              <p className="text-[11px] font-bold text-blue-700 dark:text-blue-300">
                 Sakit (S)
               </p>
-              <p className="text-base font-black text-blue-700 dark:text-blue-300">
+              <p className="text-base font-black text-amber-700 dark:text-amber-300">
                 {summaryStats.sakit}
               </p>
             </div>
-            <span className="text-xs font-extrabold text-blue-600 bg-blue-200/50 dark:bg-blue-900/50 px-1.5 py-0.5 rounded-md">
+            <div className="w-8 h-8 rounded-lg bg-amber-500 text-white font-black text-xs flex items-center justify-center shadow-xs">
               S
-            </span>
+            </div>
           </div>
 
           <div className="p-3 rounded-xl bg-sky-50/70 dark:bg-sky-950/30 border border-sky-200/60 dark:border-sky-800/60 flex items-center justify-between">
@@ -416,9 +420,9 @@ export const DailyAttendanceView: React.FC<DailyAttendanceViewProps> = () => {
                 {summaryStats.izin}
               </p>
             </div>
-            <span className="text-xs font-extrabold text-sky-600 bg-sky-200/50 dark:bg-sky-900/50 px-1.5 py-0.5 rounded-md">
+            <div className="w-8 h-8 rounded-lg bg-sky-600 text-white font-black text-xs flex items-center justify-center shadow-xs">
               I
-            </span>
+            </div>
           </div>
 
           <div className="p-3 rounded-xl bg-rose-50/70 dark:bg-rose-950/30 border border-rose-200/60 dark:border-rose-800/60 flex items-center justify-between">
@@ -430,9 +434,9 @@ export const DailyAttendanceView: React.FC<DailyAttendanceViewProps> = () => {
                 {summaryStats.alpa}
               </p>
             </div>
-            <span className="text-xs font-extrabold text-rose-600 bg-rose-200/50 dark:bg-rose-900/50 px-1.5 py-0.5 rounded-md">
+            <div className="w-8 h-8 rounded-lg bg-rose-600 text-white font-black text-xs flex items-center justify-center shadow-xs">
               A
-            </span>
+            </div>
           </div>
 
           <div className="p-3 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200/60 dark:border-indigo-800/60 flex items-center justify-between">
@@ -444,9 +448,9 @@ export const DailyAttendanceView: React.FC<DailyAttendanceViewProps> = () => {
                 {summaryStats.libur}
               </p>
             </div>
-            <span className="text-xs font-extrabold text-indigo-600 bg-indigo-200/50 dark:bg-indigo-900/50 px-1.5 py-0.5 rounded-md">
+            <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white font-black text-[11px] flex items-center justify-center shadow-xs">
               LN
-            </span>
+            </div>
           </div>
         </div>
       </div>
@@ -470,25 +474,30 @@ export const DailyAttendanceView: React.FC<DailyAttendanceViewProps> = () => {
         <div className="flex flex-wrap items-center gap-1.5 w-full sm:w-auto">
           {(
             [
-              { id: 'all', label: 'Semua' },
-              { id: 'H', label: 'Hadir' },
-              { id: 'T', label: 'Terlambat' },
-              { id: 'S', label: 'Sakit' },
-              { id: 'I', label: 'Izin' },
-              { id: 'A', label: 'Alpa' },
-              { id: 'LN', label: 'Libur Nas (LN)' },
+              { id: 'all', label: 'Semua', code: null, color: '' },
+              { id: 'H', label: 'Hadir', code: 'H', color: 'bg-emerald-600' },
+              { id: 'T', label: 'Terlambat', code: 'T', color: 'bg-purple-600' },
+              { id: 'S', label: 'Sakit', code: 'S', color: 'bg-amber-500' },
+              { id: 'I', label: 'Izin', code: 'I', color: 'bg-sky-600' },
+              { id: 'A', label: 'Alpa', code: 'A', color: 'bg-rose-600' },
+              { id: 'LN', label: 'Libur Nas', code: 'LN', color: 'bg-indigo-600' },
             ] as const
           ).map((tab) => (
             <button
               key={tab.id}
               onClick={() => setStatusFilter(tab.id as any)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                 statusFilter === tab.id
-                  ? 'bg-sky-600 text-white shadow-xs'
-                  : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-sky-200 dark:border-slate-800 hover:bg-sky-50'
+                  ? 'bg-sky-700 text-white shadow-xs ring-1 ring-sky-400'
+                  : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-sky-200 dark:border-slate-800 hover:bg-sky-50 dark:hover:bg-slate-800'
               }`}
             >
-              {tab.label}
+              {tab.code && (
+                <span className={`w-4 h-4 rounded-md flex items-center justify-center text-[9.5px] font-black text-white shrink-0 ${tab.color}`}>
+                  {tab.code}
+                </span>
+              )}
+              <span>{tab.label}</span>
             </button>
           ))}
         </div>
@@ -566,40 +575,52 @@ export const DailyAttendanceView: React.FC<DailyAttendanceViewProps> = () => {
                         <div className="text-[10px] text-slate-400">NIS: {student.nis}</div>
                       </td>
 
-                      {/* 1-Click Status Button Chips */}
-                      <td className="py-3.5 px-4">
-                        <div className="flex items-center justify-center gap-1 bg-sky-100/60 dark:bg-slate-800/80 p-1 rounded-xl border border-sky-200 dark:border-slate-700 w-fit mx-auto">
+                      {/* 1-Click Status Kotak Per Status */}
+                      <td className="py-3.5 px-3">
+                        <div className="flex items-center justify-center gap-1.5 w-fit mx-auto">
                           {(
                             [
                               {
                                 key: 'H',
                                 label: 'Hadir',
-                                activeBg: 'bg-emerald-600 text-white shadow-xs',
+                                fullName: 'Hadir (Tepat Waktu)',
+                                active: 'bg-emerald-600 text-white border-2 border-emerald-700 shadow-sm ring-2 ring-emerald-400/50',
+                                inactive: 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/60',
                               },
                               {
                                 key: 'T',
                                 label: 'Telat',
-                                activeBg: 'bg-amber-500 text-white shadow-xs',
+                                fullName: 'Terlambat',
+                                active: 'bg-purple-600 text-white border-2 border-purple-700 shadow-sm ring-2 ring-purple-400/50',
+                                inactive: 'bg-white dark:bg-slate-900 text-purple-700 dark:text-purple-400 border border-purple-300 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-950/60',
                               },
                               {
                                 key: 'S',
                                 label: 'Sakit',
-                                activeBg: 'bg-blue-600 text-white shadow-xs',
+                                fullName: 'Sakit (Dengan Surat/Keterangan)',
+                                active: 'bg-amber-500 text-white border-2 border-amber-600 shadow-sm ring-2 ring-amber-400/50',
+                                inactive: 'bg-white dark:bg-slate-900 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-950/60',
                               },
                               {
                                 key: 'I',
                                 label: 'Izin',
-                                activeBg: 'bg-sky-500 text-white shadow-xs',
+                                fullName: 'Izin (Dengan Pemberitahuan)',
+                                active: 'bg-sky-600 text-white border-2 border-sky-700 shadow-sm ring-2 ring-sky-400/50',
+                                inactive: 'bg-white dark:bg-slate-900 text-sky-700 dark:text-sky-400 border border-sky-300 dark:border-sky-800 hover:bg-sky-50 dark:hover:bg-sky-950/60',
                               },
                               {
                                 key: 'A',
                                 label: 'Alpa',
-                                activeBg: 'bg-rose-600 text-white shadow-xs',
+                                fullName: 'Alpa (Tanpa Keterangan)',
+                                active: 'bg-rose-600 text-white border-2 border-rose-700 shadow-sm ring-2 ring-rose-400/50',
+                                inactive: 'bg-white dark:bg-slate-900 text-rose-700 dark:text-rose-400 border border-rose-300 dark:border-rose-800 hover:bg-rose-50 dark:hover:bg-rose-950/60',
                               },
                               {
                                 key: 'LN',
                                 label: 'Libur Nas',
-                                activeBg: 'bg-indigo-600 text-white shadow-xs',
+                                fullName: 'Libur Nasional (LN)',
+                                active: 'bg-indigo-600 text-white border-2 border-indigo-700 shadow-sm ring-2 ring-indigo-400/50',
+                                inactive: 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-400 border border-indigo-300 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/60',
                               },
                             ] as const
                           ).map((btn) => {
@@ -609,12 +630,12 @@ export const DailyAttendanceView: React.FC<DailyAttendanceViewProps> = () => {
                                 key={btn.key}
                                 id={`status-btn-${student.id}-${btn.key}`}
                                 onClick={() => handleStatusChange(student.id, btn.key)}
-                                className={`px-2 py-1 rounded-lg font-extrabold text-[11px] transition-all cursor-pointer ${
+                                className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs transition-all cursor-pointer select-none ${
                                   isSelected
-                                    ? btn.activeBg
-                                    : 'text-slate-600 dark:text-slate-400 hover:bg-sky-200/60 dark:hover:bg-slate-700'
+                                    ? `${btn.active} scale-105 z-10 font-black`
+                                    : `${btn.inactive} opacity-80 hover:opacity-100 hover:scale-105 font-bold`
                                 }`}
-                                title={`Tandai ${btn.label}`}
+                                title={`${btn.key}: ${btn.fullName}`}
                               >
                                 {btn.key}
                               </button>

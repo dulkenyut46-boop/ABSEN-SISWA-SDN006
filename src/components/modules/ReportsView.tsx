@@ -937,14 +937,12 @@ export const ReportsView: React.FC = () => {
                             return (
                               <td
                                 key={ds.date}
-                                className="sunday-col py-1 px-0.5 text-center border-r border-slate-300 dark:border-slate-700 bg-slate-300/80 dark:bg-slate-900/90 text-slate-600 dark:text-slate-400 font-extrabold text-[9.5px]"
+                                className="sunday-col py-0.5 px-0.5 text-center border-r border-slate-300 dark:border-slate-700 bg-slate-200/80 dark:bg-slate-900/90 text-slate-600 dark:text-slate-400 font-extrabold text-[9px] align-middle"
                                 title={`${ds.date}: Hari Minggu (Libur)`}
                               >
-                                {ds.status === 'L' ? (
-                                  <span className="text-[8.5px] font-semibold text-slate-500 dark:text-slate-400">Libur</span>
-                                ) : (
-                                  <span className="text-[9.5px] font-bold text-slate-700 dark:text-slate-300">{ds.status}</span>
-                                )}
+                                <div className="w-4.5 h-4.5 sm:w-5 sm:h-5 mx-auto rounded-xs flex items-center justify-center font-bold text-[8.5px] bg-slate-300/70 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                  {ds.status === 'L' ? 'L' : ds.status}
+                                </div>
                               </td>
                             );
                           }
@@ -953,32 +951,38 @@ export const ReportsView: React.FC = () => {
                             return (
                               <td
                                 key={ds.date}
-                                className="py-1 px-0.5 text-center border-r border-slate-300 dark:border-slate-700 bg-indigo-50/70 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 font-extrabold text-[9.5px]"
+                                className="py-0.5 px-0.5 text-center border-r border-slate-300 dark:border-slate-700 bg-indigo-50/70 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 font-extrabold text-[9px] align-middle"
                                 title={`${ds.date}: ${ds.holidayName || 'Libur Nasional'}`}
                               >
-                                LN
+                                <div className="w-4.5 h-4.5 sm:w-5 sm:h-5 mx-auto rounded-xs flex items-center justify-center font-black text-[8px] bg-indigo-100 text-indigo-800 border border-indigo-300 dark:bg-indigo-950 dark:text-indigo-200 dark:border-indigo-800">
+                                  LN
+                                </div>
                               </td>
                             );
                           }
 
-                          const colorMap: Record<string, string> = {
-                            H: 'text-emerald-700 dark:text-emerald-400 font-bold',
-                            T: 'text-purple-700 dark:text-purple-400 font-bold bg-purple-50/60 dark:bg-purple-950/30',
-                            S: 'text-amber-700 dark:text-amber-400 font-bold bg-amber-50 dark:bg-amber-950/30',
-                            I: 'text-sky-700 dark:text-sky-400 font-bold bg-sky-50 dark:bg-sky-950/30',
-                            A: 'text-rose-700 dark:text-rose-400 font-bold bg-rose-50 dark:bg-rose-950/30',
-                            LN: 'text-indigo-700 dark:text-indigo-400 font-bold bg-indigo-50 dark:bg-indigo-950/30',
+                          const boxColorMap: Record<string, string> = {
+                            H: 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800 font-bold',
+                            T: 'bg-purple-50 text-purple-700 border-purple-300 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800 font-bold',
+                            S: 'bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800 font-bold',
+                            I: 'bg-sky-50 text-sky-700 border-sky-300 dark:bg-sky-950/60 dark:text-sky-300 dark:border-sky-800 font-bold',
+                            A: 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800 font-black',
+                            LN: 'bg-indigo-50 text-indigo-700 border-indigo-300 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800 font-black',
                           };
 
                           return (
                             <td
                               key={ds.date}
-                              className={`py-1 px-0.5 text-center border-r border-slate-200 dark:border-slate-700 font-mono text-[10.5px] ${
-                                colorMap[ds.status] || ''
-                              }`}
+                              className="py-0.5 px-0.5 text-center border-r border-slate-200 dark:border-slate-700 align-middle"
                               title={`${ds.date}: ${ds.status} ${ds.notes ? `(${ds.notes})` : ''}`}
                             >
-                              {ds.status}
+                              <div
+                                className={`w-4.5 h-4.5 sm:w-5 sm:h-5 mx-auto rounded-xs flex items-center justify-center text-[9.5px] border ${
+                                  boxColorMap[ds.status] || 'text-slate-600 border-transparent'
+                                }`}
+                              >
+                                {ds.status}
+                              </div>
                             </td>
                           );
                         })}

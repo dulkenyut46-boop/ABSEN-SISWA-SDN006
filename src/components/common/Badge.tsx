@@ -13,9 +13,9 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
   showLabel = true,
 }) => {
   const sizeClasses = {
-    sm: 'px-2 py-0.5 text-xs font-semibold',
-    md: 'px-2.5 py-1 text-xs font-bold',
-    lg: 'px-3 py-1.5 text-sm font-bold',
+    sm: 'px-2 py-0.5 text-xs font-semibold rounded-md',
+    md: 'px-2.5 py-1 text-xs font-bold rounded-lg',
+    lg: 'px-3 py-1.5 text-sm font-bold rounded-xl',
   };
 
   const getStatusConfig = () => {
@@ -105,10 +105,81 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border tracking-wide transition-colors ${sizeClasses[size]} ${config.bg}`}
+      className={`inline-flex items-center gap-1.5 border tracking-wide transition-colors ${sizeClasses[size]} ${config.bg}`}
     >
-      <span className={`h-1.5 w-1.5 rounded-full ${config.dot}`} />
+      <span className={`h-2 w-2 rounded-xs shrink-0 ${config.dot}`} />
       {showLabel ? config.label : status}
     </span>
+  );
+};
+
+interface AttendanceStatusSquareProps {
+  status: AttendanceStatus;
+  size?: 'xs' | 'sm' | 'md' | 'lg';
+  active?: boolean;
+  className?: string;
+}
+
+export const AttendanceStatusSquare: React.FC<AttendanceStatusSquareProps> = ({
+  status,
+  size = 'md',
+  active = true,
+  className = '',
+}) => {
+  const sizeMap = {
+    xs: 'w-5 h-5 text-[9px] rounded-xs',
+    sm: 'w-6 h-6 text-[10.5px] rounded-sm',
+    md: 'w-7.5 h-7.5 sm:w-8 sm:h-8 text-xs rounded-lg',
+    lg: 'w-9 h-9 text-sm rounded-xl',
+  };
+
+  const statusMap: Record<AttendanceStatus, { active: string; inactive: string; name: string }> = {
+    H: {
+      name: 'Hadir',
+      active: 'bg-emerald-600 text-white border-emerald-700 shadow-xs ring-2 ring-emerald-400/40 font-black',
+      inactive: 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800 font-bold',
+    },
+    T: {
+      name: 'Terlambat',
+      active: 'bg-purple-600 text-white border-purple-700 shadow-xs ring-2 ring-purple-400/40 font-black',
+      inactive: 'bg-white dark:bg-slate-900 text-purple-700 dark:text-purple-400 border border-purple-300 dark:border-purple-800 font-bold',
+    },
+    S: {
+      name: 'Sakit',
+      active: 'bg-amber-500 text-white border-amber-600 shadow-xs ring-2 ring-amber-400/40 font-black',
+      inactive: 'bg-white dark:bg-slate-900 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-800 font-bold',
+    },
+    I: {
+      name: 'Izin',
+      active: 'bg-sky-600 text-white border-sky-700 shadow-xs ring-2 ring-sky-400/40 font-black',
+      inactive: 'bg-white dark:bg-slate-900 text-sky-700 dark:text-sky-400 border border-sky-300 dark:border-sky-800 font-bold',
+    },
+    A: {
+      name: 'Alpa',
+      active: 'bg-rose-600 text-white border-rose-700 shadow-xs ring-2 ring-rose-400/40 font-black',
+      inactive: 'bg-white dark:bg-slate-900 text-rose-700 dark:text-rose-400 border border-rose-300 dark:border-rose-800 font-bold',
+    },
+    LN: {
+      name: 'Libur Nasional',
+      active: 'bg-indigo-600 text-white border-indigo-700 shadow-xs ring-2 ring-indigo-400/40 font-black',
+      inactive: 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-400 border border-indigo-300 dark:border-indigo-800 font-bold',
+    },
+  };
+
+  const config = statusMap[status] || {
+    name: String(status),
+    active: 'bg-slate-700 text-white border-slate-800 font-bold',
+    inactive: 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700',
+  };
+
+  return (
+    <div
+      className={`inline-flex items-center justify-center font-mono border transition-all ${sizeMap[size]} ${
+        active ? config.active : config.inactive
+      } ${className}`}
+      title={`${status}: ${config.name}`}
+    >
+      {status}
+    </div>
   );
 };

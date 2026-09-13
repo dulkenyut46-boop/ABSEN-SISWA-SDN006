@@ -1544,31 +1544,36 @@ export const ImportDataView: React.FC = () => {
                         </td>
                         <td className="px-3 py-2.5 text-center">
                           <span
-                            className={`px-2 py-0.5 rounded-full text-[11px] font-black ${
+                            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg border text-xs font-bold ${
                               row.status === 'H'
-                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300'
+                                ? 'bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950/80 dark:text-emerald-300 dark:border-emerald-800'
                                 : row.status === 'T'
-                                ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300'
+                                ? 'bg-purple-50 text-purple-800 border-purple-300 dark:bg-purple-950/80 dark:text-purple-300 dark:border-purple-800'
                                 : row.status === 'S'
-                                ? 'bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300'
+                                ? 'bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950/80 dark:text-amber-300 dark:border-amber-800'
                                 : row.status === 'I'
-                                ? 'bg-sky-100 text-sky-800 dark:bg-sky-950/80 dark:text-sky-300'
+                                ? 'bg-sky-50 text-sky-800 border-sky-300 dark:bg-sky-950/80 dark:text-sky-300 dark:border-sky-800'
                                 : row.status === 'LN'
-                                ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/80 dark:text-indigo-300'
-                                : 'bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300'
+                                ? 'bg-indigo-50 text-indigo-800 border-indigo-300 dark:bg-indigo-950/80 dark:text-indigo-300 dark:border-indigo-800'
+                                : 'bg-rose-50 text-rose-800 border-rose-300 dark:bg-rose-950/80 dark:text-rose-300 dark:border-rose-800'
                             }`}
                           >
-                            {row.status === 'H'
-                              ? 'Hadir'
-                              : row.status === 'T'
-                              ? 'Terlambat'
-                              : row.status === 'S'
-                              ? 'Sakit'
-                              : row.status === 'I'
-                              ? 'Izin'
-                              : row.status === 'LN'
-                              ? 'Libur Nas (LN)'
-                              : 'Alpa'}
+                            <span className="w-5 h-5 rounded-md flex items-center justify-center font-black text-[10px] bg-white dark:bg-slate-900 border border-current shadow-2xs">
+                              {row.status}
+                            </span>
+                            <span>
+                              {row.status === 'H'
+                                ? 'Hadir'
+                                : row.status === 'T'
+                                ? 'Terlambat'
+                                : row.status === 'S'
+                                ? 'Sakit'
+                                : row.status === 'I'
+                                ? 'Izin'
+                                : row.status === 'LN'
+                                ? 'Libur Nas (LN)'
+                                : 'Alpa'}
+                            </span>
                           </span>
                         </td>
                         <td className="px-3 py-2.5 font-mono text-stone-600 dark:text-stone-400">
