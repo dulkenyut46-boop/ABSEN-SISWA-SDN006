@@ -19,8 +19,6 @@ import {
   FileCheck,
 } from 'lucide-react';
 import {
-  SCHOOL_LOGO_PRESETS,
-  LogoPreset,
   fileToCompressedDataUrl,
   TUT_WURI_HANDAYANI_LOGO,
   LOGO_SD_MERAH_PUTIH,
@@ -39,6 +37,8 @@ export const LogoManager: React.FC<LogoManagerProps> = ({ onSaveSuccess }) => {
   const [isDraggingPrimary, setIsDraggingPrimary] = useState(false);
   const [isDraggingSecondary, setIsDraggingSecondary] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const [activePreviewTab, setActivePreviewTab] = useState<'splash' | 'dashboard' | 'kop'>('splash');
 
   const primaryFileInputRef = useRef<HTMLInputElement>(null);
@@ -55,6 +55,7 @@ export const LogoManager: React.FC<LogoManagerProps> = ({ onSaveSuccess }) => {
     try {
       const dataUrl = await fileToCompressedDataUrl(file, 400);
       setPrimaryLogo(dataUrl);
+      setUploadedFileName(file.name);
     } catch (err) {
       setUploadError('Gagal memproses gambar logo. Silakan coba berkas lain.');
     }
@@ -79,6 +80,7 @@ export const LogoManager: React.FC<LogoManagerProps> = ({ onSaveSuccess }) => {
   const handleApplyUrl = () => {
     if (!urlInput.trim()) return;
     setPrimaryLogo(urlInput.trim());
+    setUploadedFileName('Tautan URL Online');
     setUrlInput('');
   };
 
@@ -88,16 +90,22 @@ export const LogoManager: React.FC<LogoManagerProps> = ({ onSaveSuccess }) => {
       logoUrl: primaryLogo,
       secondaryLogoUrl: secondaryLogo,
     });
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 3500);
     if (onSaveSuccess) onSaveSuccess();
   };
 
   const handleResetToDefault = () => {
     setPrimaryLogo(TUT_WURI_HANDAYANI_LOGO);
     setSecondaryLogo(LOGO_SD_MERAH_PUTIH);
+    setUploadedFileName(null);
+    if (primaryFileInputRef.current) primaryFileInputRef.current.value = '';
     updateSchoolProfile({
       logoUrl: TUT_WURI_HANDAYANI_LOGO,
       secondaryLogoUrl: LOGO_SD_MERAH_PUTIH,
     });
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 3500);
   };
 
   return (
@@ -149,9 +157,16 @@ export const LogoManager: React.FC<LogoManagerProps> = ({ onSaveSuccess }) => {
         </div>
       )}
 
+      {saveSuccess && (
+        <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 text-xs font-bold flex items-center gap-2 animate-in fade-in">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span>Logo resmi sekolah berhasil disimpan dan langsung diterapkan ke seluruh sistem!</span>
+        </div>
+      )}
+
       {/* Main Grid: Left Editor & Right Live Multi-Preview */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* LEFT COLUMN: Upload, Presets & Controls (7 Cols) */}
+        {/* LEFT COLUMN: Upload & Controls (7 Cols) */}
         <div className="lg:col-span-7 space-y-6">
           {/* Card 1: Logo Utama Sekolah */}
           <div className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#0a182f] border border-sky-300 dark:border-sky-800 shadow-xs space-y-5">
@@ -167,7 +182,11 @@ export const LogoManager: React.FC<LogoManagerProps> = ({ onSaveSuccess }) => {
               </span>
             </div>
 
-            {/* Drag and Drop Zone */}
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              Unggah berkas logo resmi sekolah Anda. Logo ini berfungsi sebagai identitas utama lembaga di KOP surat sebelah kiri, animasi pembuka aplikasi, serta profil di menu dasbor.
+            </p>
+
+            {/* Drag and Drop Zone - Upload Berkas */}
             <div
               onDragOver={(e) => {
                 e.preventDefault();
@@ -201,7 +220,7 @@ export const LogoManager: React.FC<LogoManagerProps> = ({ onSaveSuccess }) => {
               />
 
               {/* Logo Preview Avatar */}
-              <div className="w-20 h-20 rounded-2xl bg-white dark:bg-[#071324] border border-sky-300 dark:border-sky-800 p-2 flex items-center justify-center shadow-md overflow-hidden relative group">
+              <div className="w-24 h-24 rounded-2xl bg-white dark:bg-[#071324] border border-sky-300 dark:border-sky-800 p-2 flex items-center justify-center shadow-md overflow-hidden relative group">
                 {primaryLogo ? (
                   <img
                     src={primaryLogo}
@@ -218,15 +237,41 @@ export const LogoManager: React.FC<LogoManagerProps> = ({ onSaveSuccess }) => {
                   Klik atau Tarik Berkas Logo ke Sini
                 </p>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                  Mendukung PNG transparan, JPG, SVG, atau WebP (Disarankan rasio 1:1)
+                  Mendukung berkas PNG transparan, JPG, JPEG, SVG, atau WebP (Disarankan rasio 1:1)
                 </p>
               </div>
 
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-700 hover:bg-sky-800 text-white text-xs font-bold shadow-xs">
-                <Upload className="w-3.5 h-3.5" />
-                Pilih Berkas Logo dari Komputer
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-sky-700 hover:bg-sky-800 text-white text-xs font-bold shadow-xs">
+                  <Upload className="w-3.5 h-3.5" />
+                  Pilih Berkas Logo dari Komputer
+                </span>
+              </div>
             </div>
+
+            {/* Status Berkas yang Diunggah */}
+            {uploadedFileName && (
+              <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 text-xs">
+                <div className="flex items-center gap-2 min-w-0">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span className="truncate font-semibold">
+                    Berkas siap disimpan: <strong className="font-mono">{uploadedFileName}</strong>
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setUploadedFileName(null);
+                    setPrimaryLogo(schoolProfile.logoUrl || TUT_WURI_HANDAYANI_LOGO);
+                    if (primaryFileInputRef.current) primaryFileInputRef.current.value = '';
+                  }}
+                  className="text-rose-600 hover:text-rose-700 dark:text-rose-400 text-xs font-bold shrink-0 ml-2 hover:underline cursor-pointer"
+                >
+                  Batal
+                </button>
+              </div>
+            )}
 
             {/* Direct URL Input */}
             <div className="space-y-1.5 pt-2 border-t border-sky-100 dark:border-sky-900/60">
@@ -249,48 +294,6 @@ export const LogoManager: React.FC<LogoManagerProps> = ({ onSaveSuccess }) => {
                 >
                   Terapkan
                 </button>
-              </div>
-            </div>
-
-            {/* Pilihan Logo Siap Pakai (Presets) */}
-            <div className="space-y-2.5 pt-2 border-t border-sky-100 dark:border-sky-900/60">
-              <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
-                Pilihan Logo Siap Pakai (Preset Standar Indonesia):
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {SCHOOL_LOGO_PRESETS.map((preset) => {
-                  const isSelected = primaryLogo === preset.dataUrl;
-                  return (
-                    <div
-                      key={preset.id}
-                      onClick={() => setPrimaryLogo(preset.dataUrl)}
-                      className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center gap-3 ${
-                        isSelected
-                          ? 'border-sky-600 bg-sky-100/80 dark:bg-sky-950/80 shadow-xs ring-1 ring-sky-500'
-                          : 'border-sky-200 dark:border-sky-800 bg-white dark:bg-[#071324] hover:bg-sky-50 dark:hover:bg-sky-950/50'
-                      }`}
-                    >
-                      <div className="w-10 h-10 rounded-lg bg-white p-1 border border-sky-200 flex items-center justify-center shrink-0 shadow-2xs">
-                        <img
-                          src={preset.dataUrl}
-                          alt={preset.name}
-                          className="w-full h-full object-contain"
-                        />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-1">
-                          <h5 className="text-xs font-extrabold text-slate-900 dark:text-white truncate">
-                            {preset.name}
-                          </h5>
-                          {isSelected && <Check className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400 shrink-0" />}
-                        </div>
-                        <p className="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-1">
-                          {preset.description}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
               </div>
             </div>
           </div>
